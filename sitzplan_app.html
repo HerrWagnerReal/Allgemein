@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Sitzplan-Editor</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      height: 100vh;
+      overflow: hidden;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #eef2f7;
+      color: #1f2937;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+    header {
+      background: white;
+      border-bottom: 1px solid #d5dbe3;
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+      z-index: 5;
+    }
+    h1 { margin: 0; font-size: 18px; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+    button, textarea, select, input { font-family: inherit; font-size: 14px; }
+    button {
+      min-height: 38px;
+      padding: 8px 11px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      background: white;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button.primary { background: #2563eb; color: white; border-color: #2563eb; }
+    button.success { background: #16a34a; color: white; border-color: #16a34a; }
+    button.danger { background: #fff7f7; color: #991b1b; border-color: #fecaca; }
+    button:active { transform: scale(.98); }
+    main { display: grid; grid-template-columns: 390px 1fr; min-height: 0; }
+    aside {
+      background: white;
+      border-right: 1px solid #d5dbe3;
+      padding: 14px;
+      overflow: auto;
+      z-index: 2;
+    }
+    .section { border-bottom: 1px solid #e2e8f0; padding-bottom: 14px; margin-bottom: 14px; }
+    .section:last-child { border-bottom: 0; }
+    .section-title {
+      margin: 0 0 10px;
+      font-size: 13px;
+      font-weight: 800;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .hint { margin: 9px 0 0; color: #475569; font-size: 13px; line-height: 1.35; }
+    .palette { display: grid; gap: 8px; }
+    .palette button { display: flex; justify-content: space-between; align-items: center; }
+    .mini-single, .mini-double { background: #f6d7a7; border: 2px solid #9a6a2f; border-radius: 5px; }
+    .mini-single { width: 28px; height: 28px; }
+    .mini-double { width: 52px; height: 28px; }
+    textarea {
+      width: 100%;
+      min-height: 110px;
+      resize: vertical;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 10px;
+      line-height: 1.35;
+    }
+    .two-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+    .excel-box {
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px dashed #93c5fd;
+      background: #eff6ff;
+      border-radius: 12px;
+      display: grid;
+      gap: 8px;
+    }
+    .excel-box label { font-size: 13px; font-weight: 800; color: #1d4ed8; }
+    .excel-box input { width: 100%; background: white; border: 1px solid #bfdbfe; border-radius: 8px; padding: 8px; }
+    .student-list { display: grid; gap: 10px; }
+    .student-card { background: #f8fafc; border: 1px solid #d5dbe3; border-radius: 12px; padding: 10px; }
+    .student-name { font-weight: 900; margin-bottom: 8px; }
+    .ped-box { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 10px; padding: 8px; margin-bottom: 9px; }
+    .ped-title { font-size: 12px; font-weight: 900; color: #9a3412; margin-bottom: 5px; text-transform: uppercase; }
+    .check-row { display: flex; gap: 7px; align-items: center; font-size: 13px; font-weight: 700; color: #431407; margin: 6px 0; }
+    .check-row input { width: 18px; height: 18px; }
+    .pref-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .pref-col label, .ped-select-label { display: block; font-size: 12px; font-weight: 800; color: #64748b; margin: 5px 0 4px; }
+    .ped-box .ped-select-label { color: #9a3412; }
+    select { width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 7px; background: white; margin-bottom: 5px; }
+    .result-box {
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px solid #d5dbe3;
+      border-radius: 10px;
+      background: #f1f5f9;
+      font-size: 13px;
+      line-height: 1.45;
+      white-space: pre-line;
+      max-height: 190px;
+      overflow: auto;
+    }
+    .canvas-wrap { overflow: auto; padding: 18px; min-width: 0; min-height: 0; }
+    #room {
+      position: relative;
+      width: 1100px;
+      height: 760px;
+      background:
+        linear-gradient(rgba(148,163,184,.18) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148,163,184,.18) 1px, transparent 1px),
+        #fff;
+      background-size: 40px 40px;
+      border: 3px solid #334155;
+      border-radius: 14px;
+      box-shadow: 0 8px 24px rgba(15,23,42,.12);
+      touch-action: none;
+      overflow: hidden;
+    }
+    .board-label {
+      position: absolute;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 330px;
+      height: 42px;
+      background: #e2e8f0;
+      border: 2px solid #64748b;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      pointer-events: none;
+    }
+    .desk {
+      position: absolute;
+      background: #f6d7a7;
+      border: 3px solid #9a6a2f;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,.14);
+      user-select: none;
+      touch-action: none;
+      cursor: grab;
+    }
+    .desk.single { width: 86px; height: 86px; }
+    .desk.double { width: 156px; height: 86px; }
+    .desk.selected { outline: 4px solid #ef4444; outline-offset: 3px; z-index: 10; }
+    .desk-label { position: absolute; top: 4px; left: 6px; font-size: 12px; font-weight: 800; color: rgba(91,59,18,.75); }
+    .seat {
+      position: absolute;
+      bottom: -21px;
+      height: 32px;
+      min-width: 58px;
+      max-width: 76px;
+      padding: 0 6px;
+      background: #e0f2fe;
+      border: 2px solid #0284c7;
+      color: #075985;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 900;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      pointer-events: none;
+    }
+    .seat.empty { background: #f8fafc; border-color: #cbd5e1; color: #94a3b8; font-weight: 700; }
+    .single .seat-a { left: 50%; transform: translateX(-50%); }
+    .double .seat-a { left: 8px; }
+    .double .seat-b { right: 8px; }
+    .resize-note { position: absolute; right: 14px; bottom: 10px; font-size: 12px; color: #64748b; pointer-events: none; }
+    @media (max-width: 950px) {
+      body { overflow: auto; }
+      header { align-items: flex-start; flex-direction: column; }
+      main { grid-template-columns: 1fr; }
+      aside { border-right: 0; border-bottom: 1px solid #d5dbe3; max-height: 45vh; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Sitzplan-Editor</h1>
+    <div class="toolbar">
+      <button id="rotateBtn">Tisch drehen</button>
+      <button id="deleteBtn" class="danger">Auswahl löschen</button>
+      <button id="clearBtn" class="danger">Alles löschen</button>
+      <button id="saveBtn" class="primary">Speichern</button>
+      <button id="loadBtn">Laden</button>
+    </div>
+  </header>
+
+  <main>
+    <aside>
+      <section class="section">
+        <p class="section-title">Tische</p>
+        <div class="palette">
+          <button id="addSingleBtn">Einzeltisch <span class="mini-single"></span></button>
+          <button id="addDoubleBtn">Zweiertisch <span class="mini-double"></span></button>
+        </div>
+      </section>
+
+      <section class="section">
+        <p class="section-title">Klassenliste</p>
+        <textarea id="nameInput" placeholder="Vornamen eintragen, je Name eine Zeile&#10;Anna&#10;Ben&#10;Clara&#10;David"></textarea>
+        <div class="two-cols">
+          <button id="applyNamesBtn" class="primary">Liste übernehmen</button>
+          <button id="clearSeatsBtn">Sitze leeren</button>
+        </div>
+        <div class="excel-box">
+          <label for="excelInput">Excel- oder CSV-Datei hochladen</label>
+          <input id="excelInput" type="file" accept=".xlsx,.xls,.csv">
+          <button id="importExcelBtn">Datei übernehmen</button>
+        </div>
+        <p class="hint">Excel benötigt die externe SheetJS-Bibliothek. Wenn diese blockiert wird, die Vorlage als CSV UTF-8 speichern und hochladen.</p>
+      </section>
+
+      <section class="section">
+        <p class="section-title">Schülerdaten</p>
+        <div id="studentList" class="student-list"></div>
+      </section>
+
+      <section class="section">
+        <p class="section-title">Verteilung</p>
+        <button id="assignBtn" class="success" style="width:100%">Sitzplan berechnen</button>
+        <div id="resultBox" class="result-box">Bereit.</div>
+      </section>
+    </aside>
+
+    <div class="canvas-wrap">
+      <div id="room">
+        <div class="board-label">Tafel / Whiteboard</div>
+        <div class="resize-note">Raumfläche: 1100 × 760 px</div>
+      </div>
+    </div>
+  </main>
+
+<script>
+(function () {
+  "use strict";
+
+  const room = document.getElementById("room");
+  const addSingleBtn = document.getElementById("addSingleBtn");
+  const addDoubleBtn = document.getElementById("addDoubleBtn");
+  const rotateBtn = document.getElementById("rotateBtn");
+  const deleteBtn = document.getElementById("deleteBtn");
+  const clearBtn = document.getElementById("clearBtn");
+  const saveBtn = document.getElementById("saveBtn");
+  const loadBtn = document.getElementById("loadBtn");
+  const nameInput = document.getElementById("nameInput");
+  const applyNamesBtn = document.getElementById("applyNamesBtn");
+  const clearSeatsBtn = document.getElementById("clearSeatsBtn");
+  const excelInput = document.getElementById("excelInput");
+  const importExcelBtn = document.getElementById("importExcelBtn");
+  const studentList = document.getElementById("studentList");
+  const assignBtn = document.getElementById("assignBtn");
+  const resultBox = document.getElementById("resultBox");
+
+  let students = [];
+  let selectedDesk = null;
+  let deskCounter = 1;
+  let drag = null;
+
+  function setStatus(text) {
+    resultBox.textContent = text;
+  }
+
+  function clamp(n, min, max) {
+    return Math.max(min, Math.min(max, n));
+  }
+
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const tmp = a[i];
+      a[i] = a[j];
+      a[j] = tmp;
+    }
+    return a;
+  }
+
+  function uniqueNames(names) {
+    const seen = new Set();
+    const out = [];
+    names.forEach(function (name) {
+      const clean = String(name || "").trim();
+      if (clean && !seen.has(clean)) {
+        seen.add(clean);
+        out.push(clean);
+      }
+    });
+    return out;
+  }
+
+  function normalizeStudent(stu, validNames) {
+    const name = String(stu.name || "").trim();
+    const valid = validNames || students.map(function (s) { return s.name; });
+    function list(values) {
+      return uniqueNames(values || []).filter(function (x) { return x !== name && valid.indexOf(x) !== -1; }).slice(0, 3);
+    }
+    const never = String(stu.pedNeverNear || "").trim();
+    return {
+      name: name,
+      wishes: list(stu.wishes),
+      dislikes: list(stu.dislikes),
+      pedFront: !!stu.pedFront,
+      pedAlone: !!stu.pedAlone,
+      pedNeverNear: never && never !== name && valid.indexOf(never) !== -1 ? never : ""
+    };
+  }
+
+  function parseNames() {
+    return uniqueNames(nameInput.value.split(/\n|,|;/));
+  }
+
+  function selectDesk(desk) {
+    if (selectedDesk) selectedDesk.classList.remove("selected");
+    selectedDesk = desk || null;
+    if (selectedDesk) selectedDesk.classList.add("selected");
+  }
+
+  function makeSeat(className) {
+    const seat = document.createElement("div");
+    seat.className = "seat " + className + " empty";
+    seat.dataset.name = "";
+    seat.textContent = "frei";
+    return seat;
+  }
+
+  function rebuildDeskInner(desk) {
+    const type = desk.dataset.type;
+    desk.innerHTML = "";
+    const label = document.createElement("div");
+    label.className = "desk-label";
+    label.textContent = "Tisch " + desk.dataset.label;
+    desk.appendChild(label);
+    const a = makeSeat("seat-a");
+    a.dataset.seat = "a";
+    desk.appendChild(a);
+    if (type === "double") {
+      const b = makeSeat("seat-b");
+      b.dataset.seat = "b";
+      desk.appendChild(b);
+    }
+  }
+
+  function setSeat(desk, key, name) {
+    const seat = desk.querySelector('[data-seat="' + key + '"]');
+    if (!seat) return;
+    seat.dataset.name = name || "";
+    seat.textContent = name || "frei";
+    seat.title = name || "frei";
+    seat.classList.toggle("empty", !name);
+  }
+
+  function createDesk(type, x, y, rotation, label, seats) {
+    const desk = document.createElement("div");
+    desk.className = "desk " + type;
+    desk.dataset.type = type;
+    desk.dataset.label = label || String(deskCounter++);
+    desk.dataset.rotation = String(rotation || 0);
+    desk.style.left = (x || 100) + "px";
+    desk.style.top = (y || 100) + "px";
+    desk.style.transform = "rotate(" + (rotation || 0) + "deg)";
+    rebuildDeskInner(desk);
+    bindDesk(desk);
+    room.appendChild(desk);
+    if (seats) {
+      setSeat(desk, "a", seats.a || "");
+      setSeat(desk, "b", seats.b || "");
+    }
+    keepInside(desk);
+    selectDesk(desk);
+    return desk;
+  }
+
+  function keepInside(desk) {
+    const rect = desk.getBoundingClientRect();
+    const x = parseFloat(desk.style.left) || 0;
+    const y = parseFloat(desk.style.top) || 0;
+    desk.style.left = clamp(x, 0, room.clientWidth - rect.width) + "px";
+    desk.style.top = clamp(y, 0, room.clientHeight - rect.height) + "px";
+  }
+
+  function bindDesk(desk) {
+    desk.addEventListener("pointerdown", function (e) {
+      e.preventDefault();
+      desk.setPointerCapture(e.pointerId);
+      selectDesk(desk);
+      const roomRect = room.getBoundingClientRect();
+      drag = {
+        desk: desk,
+        id: e.pointerId,
+        ox: e.clientX - roomRect.left - (parseFloat(desk.style.left) || 0),
+        oy: e.clientY - roomRect.top - (parseFloat(desk.style.top) || 0)
+      };
+    });
+    desk.addEventListener("pointermove", function (e) {
+      if (!drag || drag.desk !== desk || drag.id !== e.pointerId) return;
+      e.preventDefault();
+      const roomRect = room.getBoundingClientRect();
+      const rect = desk.getBoundingClientRect();
+      const x = e.clientX - roomRect.left - drag.ox;
+      const y = e.clientY - roomRect.top - drag.oy;
+      desk.style.left = clamp(x, 0, room.clientWidth - rect.width) + "px";
+      desk.style.top = clamp(y, 0, room.clientHeight - rect.height) + "px";
+    });
+    desk.addEventListener("pointerup", function () { drag = null; });
+    desk.addEventListener("pointercancel", function () { drag = null; });
+  }
+
+  function getDesks() {
+    return Array.from(room.querySelectorAll(".desk"));
+  }
+
+  function getSeats() {
+    const desks = getDesks();
+    const maxY = Math.max(1, ...desks.map(function (d) { return parseFloat(d.style.top) || 0; }));
+    const seats = [];
+    desks.forEach(function (desk) {
+      const x = parseFloat(desk.style.left) || 0;
+      const y = parseFloat(desk.style.top) || 0;
+      const frontScore = 1 - y / maxY;
+      seats.push({ id: desk.dataset.label + "-a", desk: desk, key: "a", type: desk.dataset.type, partnerId: desk.dataset.type === "double" ? desk.dataset.label + "-b" : null, x: x, y: y, frontScore: frontScore });
+      if (desk.dataset.type === "double") {
+        seats.push({ id: desk.dataset.label + "-b", desk: desk, key: "b", type: desk.dataset.type, partnerId: desk.dataset.label + "-a", x: x + 78, y: y, frontScore: frontScore });
+      }
+    });
+    return seats;
+  }
+
+  function clearSeats() {
+    getDesks().forEach(function (desk) {
+      setSeat(desk, "a", "");
+      setSeat(desk, "b", "");
+    });
+  }
+
+  function buildStudentsFromNames() {
+    const old = new Map(students.map(function (s) { return [s.name, s]; }));
+    const names = parseNames();
+    students = names.map(function (name) {
+      return normalizeStudent(old.get(name) || { name: name }, names);
+    });
+    renderStudents();
+    saveData();
+    setStatus(students.length + " Schüler übernommen.");
+  }
+
+  function optionList(currentName, selectedValue) {
+    let html = '<option value="">—</option>';
+    students.forEach(function (s) {
+      if (s.name === currentName) return;
+      const sel = s.name === selectedValue ? " selected" : "";
+      html += '<option value="' + escapeHtml(s.name) + '"' + sel + '>' + escapeHtml(s.name) + '</option>';
+    });
+    return html;
+  }
+
+  function escapeHtml(text) {
+    return String(text).replace(/[&<>"']/g, function (m) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[m];
+    });
+  }
+
+  function renderStudents() {
+    students = students.map(function (s) { return normalizeStudent(s); });
+    studentList.innerHTML = "";
+    if (!students.length) {
+      studentList.innerHTML = '<p class="hint">Noch keine Namen übernommen.</p>';
+      return;
+    }
+    students.forEach(function (s, index) {
+      const card = document.createElement("div");
+      card.className = "student-card";
+      let html = '';
+      html += '<div class="student-name">' + escapeHtml(s.name) + '</div>';
+      html += '<div class="ped-box">';
+      html += '<div class="ped-title">Pädagogische Vorgaben</div>';
+      html += '<label class="check-row"><input type="checkbox" data-index="' + index + '" data-kind="pedFront" ' + (s.pedFront ? 'checked' : '') + '> Möglichst weit vorne</label>';
+      html += '<label class="check-row"><input type="checkbox" data-index="' + index + '" data-kind="pedAlone" ' + (s.pedAlone ? 'checked' : '') + '> Alleine sitzen</label>';
+      html += '<label class="ped-select-label">Auf keinen Fall in der Nähe von</label>';
+      html += '<select data-index="' + index + '" data-kind="pedNeverNear">' + optionList(s.name, s.pedNeverNear) + '</select>';
+      html += '</div>';
+      html += '<div class="pref-grid">';
+      html += '<div class="pref-col"><label>Wünsche</label>';
+      for (let i = 0; i < 3; i++) html += '<select data-index="' + index + '" data-list="wishes" data-slot="' + i + '">' + optionList(s.name, s.wishes[i] || "") + '</select>';
+      html += '</div>';
+      html += '<div class="pref-col"><label>Nicht-Wünsche</label>';
+      for (let i = 0; i < 3; i++) html += '<select data-index="' + index + '" data-list="dislikes" data-slot="' + i + '">' + optionList(s.name, s.dislikes[i] || "") + '</select>';
+      html += '</div></div>';
+      card.innerHTML = html;
+      studentList.appendChild(card);
+    });
+  }
+
+  function updateStudentFromControl(el) {
+    const index = Number(el.dataset.index);
+    const s = students[index];
+    if (!s) return;
+    if (el.dataset.kind === "pedFront" || el.dataset.kind === "pedAlone") {
+      s[el.dataset.kind] = el.checked;
+    }
+    if (el.dataset.kind === "pedNeverNear") {
+      s.pedNeverNear = el.value;
+      if (s.pedNeverNear) {
+        s.wishes = s.wishes.filter(function (n) { return n !== s.pedNeverNear; });
+        s.dislikes = s.dislikes.filter(function (n) { return n !== s.pedNeverNear; });
+      }
+    }
+    if (el.dataset.list) {
+      const listName = el.dataset.list;
+      const slot = Number(el.dataset.slot);
+      s[listName][slot] = el.value;
+      s[listName] = uniqueNames(s[listName]).slice(0, 3);
+      const other = listName === "wishes" ? "dislikes" : "wishes";
+      s[other] = s[other].filter(function (n) { return s[listName].indexOf(n) === -1; });
+      if (s.pedNeverNear && s[listName].indexOf(s.pedNeverNear) !== -1) s.pedNeverNear = "";
+    }
+    renderStudents();
+    saveData();
+  }
+
+  function getPairs(seats) {
+    const pairs = [];
+    const byId = new Map(seats.map(function (s) { return [s.id, s]; }));
+    seats.forEach(function (s) {
+      if (s.partnerId && byId.has(s.partnerId) && s.id < s.partnerId) pairs.push([s.id, s.partnerId, "same"]);
+    });
+    for (let i = 0; i < seats.length; i++) {
+      for (let j = i + 1; j < seats.length; j++) {
+        const a = seats[i], b = seats[j];
+        if (a.desk === b.desk) continue;
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
+        const d = Math.sqrt(dx * dx + dy * dy);
+        if (d <= 190) pairs.push([a.id, b.id, "near"]);
+      }
+    }
+    return pairs;
+  }
+
+  function scoreAssignment(assignment, seats, pairs) {
+    const seatToName = new Map();
+    const nameToSeatIndex = new Map();
+    assignment.forEach(function (name, i) {
+      if (!name) return;
+      seatToName.set(seats[i].id, name);
+      nameToSeatIndex.set(name, i);
+    });
+    const nearSet = new Set();
+    const sameSet = new Set();
+    pairs.forEach(function (p) {
+      const a = seatToName.get(p[0]);
+      const b = seatToName.get(p[1]);
+      if (!a || !b) return;
+      nearSet.add(a + "||" + b);
+      nearSet.add(b + "||" + a);
+      if (p[2] === "same") {
+        sameSet.add(a + "||" + b);
+        sameSet.add(b + "||" + a);
+      }
+    });
+    let score = 0;
+    const stats = { score: 0, wishes: 0, dislikes: 0, front: 0, alone: 0, aloneBroken: 0, neverBroken: 0 };
+    students.forEach(function (s) {
+      const idx = nameToSeatIndex.get(s.name);
+      const seat = seats[idx];
+      if (!seat) return;
+      if (s.pedFront) {
+        score += Math.round(seat.frontScore * 450);
+        if (seat.frontScore >= 0.62) stats.front++;
+      }
+      if (s.pedAlone) {
+        const partnerEmpty = seat.partnerId && !seatToName.get(seat.partnerId);
+        const aloneOk = seat.type === "single" || partnerEmpty;
+        if (aloneOk) { score += 700; stats.alone++; }
+        else { score -= 1900; stats.aloneBroken++; }
+      }
+      if (s.pedNeverNear && nearSet.has(s.name + "||" + s.pedNeverNear)) {
+        score -= 2800;
+        stats.neverBroken++;
+      }
+      s.wishes.forEach(function (w, i) {
+        if (nearSet.has(s.name + "||" + w)) {
+          score += [35, 24, 14][i] || 10;
+          stats.wishes++;
+        }
+      });
+      s.dislikes.forEach(function (d) {
+        if (nearSet.has(s.name + "||" + d)) {
+          score -= 150;
+          stats.dislikes++;
+        }
+      });
+    });
+    pairs.forEach(function (p) {
+      const a = seatToName.get(p[0]);
+      const b = seatToName.get(p[1]);
+      if (!a || !b) return;
+      const sa = students.find(function (s) { return s.name === a; });
+      const sb = students.find(function (s) { return s.name === b; });
+      if (!sa || !sb) return;
+      const wish = sa.wishes.indexOf(b) !== -1 || sb.wishes.indexOf(a) !== -1;
+      const dislike = sa.dislikes.indexOf(b) !== -1 || sb.dislikes.indexOf(a) !== -1;
+      if (p[2] === "same" && wish) score += 30;
+      if (p[2] === "same" && dislike) score -= 180;
+    });
+    stats.score = score;
+    return stats;
+  }
+
+  function calculate() {
+    const seats = getSeats();
+    if (!students.length) { setStatus("Bitte zuerst eine Klassenliste übernehmen oder importieren."); return; }
+    if (!seats.length) { setStatus("Bitte zuerst Tische einfügen."); return; }
+    if (students.length > seats.length) { setStatus("Nicht genug Plätze: " + students.length + " Schüler, aber nur " + seats.length + " Plätze."); return; }
+
+    const pairs = getPairs(seats);
+    const names = students.map(function (s) { return s.name; });
+    const empty = Array(seats.length - names.length).fill("");
+    const base = names.concat(empty);
+    let best = null;
+    let bestStats = { score: -Infinity };
+    const iterations = Math.min(16000, Math.max(2500, students.length * students.length * 75));
+
+    for (let i = 0; i < iterations; i++) {
+      let cand = shuffle(base);
+      let current = scoreAssignment(cand, seats, pairs);
+      for (let step = 0; step < 24; step++) {
+        const a = Math.floor(Math.random() * cand.length);
+        const b = Math.floor(Math.random() * cand.length);
+        if (a === b) continue;
+        const sw = cand.slice();
+        const tmp = sw[a]; sw[a] = sw[b]; sw[b] = tmp;
+        const st = scoreAssignment(sw, seats, pairs);
+        if (st.score >= current.score || Math.random() < 0.02) {
+          cand = sw;
+          current = st;
+        }
+      }
+      if (current.score > bestStats.score) {
+        best = cand;
+        bestStats = current;
+      }
+    }
+    clearSeats();
+    best.forEach(function (name, i) {
+      setSeat(seats[i].desk, seats[i].key, name);
+    });
+    const frontTotal = students.filter(function (s) { return s.pedFront; }).length;
+    const aloneTotal = students.filter(function (s) { return s.pedAlone; }).length;
+    const neverTotal = students.filter(function (s) { return s.pedNeverNear; }).length;
+    const wishTotal = students.reduce(function (sum, s) { return sum + s.wishes.length; }, 0);
+    const dislikeTotal = students.reduce(function (sum, s) { return sum + s.dislikes.length; }, 0);
+    setStatus(
+      "Beste Bewertung: " + bestStats.score + "\n" +
+      "Vorne erfüllt: " + bestStats.front + " von " + frontTotal + "\n" +
+      "Alleine erfüllt: " + bestStats.alone + " von " + aloneTotal + "\n" +
+      "Verletzte Alleine-Vorgaben: " + bestStats.aloneBroken + "\n" +
+      "Verletzte Nie-in-der-Nähe-Vorgaben: " + bestStats.neverBroken + " von " + neverTotal + "\n" +
+      "Erfüllte normale Wunsch-Nähen: " + bestStats.wishes + " von " + wishTotal + "\n" +
+      "Verletzte normale Nicht-Wünsche: " + bestStats.dislikes + " von " + dislikeTotal
+    );
+    saveData();
+  }
+
+  function cleanCell(v) {
+    return String(v == null ? "" : v).trim();
+  }
+
+  function headerKey(v) {
+    return cleanCell(v).toLowerCase()
+      .replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss")
+      .replace(/[^a-z0-9]/g, "");
+  }
+
+  function pick(row, names) {
+    const keys = Object.keys(row);
+    for (let i = 0; i < names.length; i++) {
+      const target = headerKey(names[i]);
+      const real = keys.find(function (k) { return headerKey(k) === target; });
+      if (real) return cleanCell(row[real]);
+    }
+    return "";
+  }
+
+  function isYes(v) {
+    const t = cleanCell(v).toLowerCase();
+    return ["ja", "j", "yes", "x", "1", "true", "wahr"].indexOf(t) !== -1;
+  }
+
+  function importRows(rows) {
+    const imported = [];
+    rows.forEach(function (row) {
+      const name = pick(row, ["Vorname", "Name", "Schüler", "Schueler"]);
+      if (!name) return;
+      imported.push({
+        name: name,
+        wishes: [pick(row, ["Wunsch 1", "Wunsch1"]), pick(row, ["Wunsch 2", "Wunsch2"]), pick(row, ["Wunsch 3", "Wunsch3"])].filter(Boolean),
+        dislikes: [
+          pick(row, ["Nicht-Wunsch 1", "Nicht Wunsch 1", "Nichtwunsch 1", "NichtWunsch1"]),
+          pick(row, ["Nicht-Wunsch 2", "Nicht Wunsch 2", "Nichtwunsch 2", "NichtWunsch2"]),
+          pick(row, ["Nicht-Wunsch 3", "Nicht Wunsch 3", "Nichtwunsch 3", "NichtWunsch3"])
+        ].filter(Boolean),
+        pedFront: isYes(pick(row, ["Möglichst weit vorne", "Moeglichst weit vorne", "Weit vorne", "Vorne"])),
+        pedAlone: isYes(pick(row, ["Alleine sitzen", "Allein sitzen", "Alleine", "Allein"])),
+        pedNeverNear: pick(row, ["Auf keinen Fall in der Nähe von", "Auf keinen Fall in der Naehe von", "Nie in der Nähe von", "Nie in der Naehe von"])
+      });
+    });
+    const names = uniqueNames(imported.map(function (s) { return s.name; }));
+    students = imported.filter(function (s, i) {
+      return imported.findIndex(function (x) { return x.name === s.name; }) === i;
+    }).map(function (s) { return normalizeStudent(s, names); });
+    nameInput.value = students.map(function (s) { return s.name; }).join("\n");
+    renderStudents();
+    saveData();
+    setStatus(students.length + " Schüler aus Datei übernommen.");
+  }
+
+  function parseCsv(text) {
+    const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/).filter(function (line) { return line.trim(); });
+    if (!lines.length) return [];
+    const sep = lines[0].indexOf(";") !== -1 ? ";" : ",";
+    function split(line) {
+      const out = [];
+      let cell = "";
+      let quote = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') quote = !quote;
+        else if (ch === sep && !quote) { out.push(cell.trim().replace(/^"|"$/g, "")); cell = ""; }
+        else cell += ch;
+      }
+      out.push(cell.trim().replace(/^"|"$/g, ""));
+      return out;
+    }
+    const headers = split(lines[0]);
+    return lines.slice(1).map(function (line) {
+      const cells = split(line);
+      const row = {};
+      headers.forEach(function (h, i) { row[h] = cells[i] || ""; });
+      return row;
+    });
+  }
+
+  async function importFile() {
+    const file = excelInput.files && excelInput.files[0];
+    if (!file) { setStatus("Bitte zuerst eine Datei auswählen."); return; }
+    try {
+      setStatus("Datei wird gelesen ...");
+      const lower = file.name.toLowerCase();
+      if (lower.endsWith(".csv")) {
+        const text = await file.text();
+        importRows(parseCsv(text));
+        return;
+      }
+      if (typeof XLSX === "undefined") {
+        setStatus("XLSX-Bibliothek wurde nicht geladen. Bitte mit Internetverbindung öffnen oder die Excel-Vorlage als CSV UTF-8 speichern und hochladen.");
+        return;
+      }
+      const buffer = await file.arrayBuffer();
+      const wb = XLSX.read(buffer, { type: "array" });
+      const sheetName = wb.SheetNames.indexOf("Klassenliste") !== -1 ? "Klassenliste" : wb.SheetNames[0];
+      const sheet = wb.Sheets[sheetName];
+      let rows = XLSX.utils.sheet_to_json(sheet, { defval: "", blankrows: false });
+      if (!rows.length) {
+        const table = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "", blankrows: false });
+        const headerIndex = table.findIndex(function (r) { return r.some(function (c) { return headerKey(c) === headerKey("Vorname"); }); });
+        if (headerIndex >= 0) {
+          const headers = table[headerIndex];
+          rows = table.slice(headerIndex + 1).map(function (r) {
+            const obj = {};
+            headers.forEach(function (h, i) { obj[h] = r[i] || ""; });
+            return obj;
+          });
+        }
+      }
+      if (!rows.length) {
+        setStatus("Keine Daten gefunden. Das Blatt muss eine Spalte „Vorname“ enthalten.");
+        return;
+      }
+      importRows(rows);
+    } catch (err) {
+      console.error(err);
+      setStatus("Datei konnte nicht gelesen werden. Teste alternativ: Excel → Speichern unter → CSV UTF-8 und diese CSV hochladen.");
+    }
+  }
+
+  function saveData() {
+    const desks = getDesks().map(function (desk) {
+      return {
+        type: desk.dataset.type,
+        label: desk.dataset.label,
+        x: parseFloat(desk.style.left) || 0,
+        y: parseFloat(desk.style.top) || 0,
+        rotation: Number(desk.dataset.rotation || 0),
+        seats: {
+          a: (desk.querySelector('[data-seat="a"]') || {}).dataset ? desk.querySelector('[data-seat="a"]').dataset.name : "",
+          b: (desk.querySelector('[data-seat="b"]') || {}).dataset ? desk.querySelector('[data-seat="b"]').dataset.name : ""
+        }
+      };
+    });
+    localStorage.setItem("sitzplan-editor-v3", JSON.stringify({ desks: desks, students: students, names: nameInput.value }));
+  }
+
+  function loadData() {
+    const raw = localStorage.getItem("sitzplan-editor-v3");
+    if (!raw) { setStatus("Kein gespeicherter Sitzplan gefunden."); return; }
+    try {
+      const data = JSON.parse(raw);
+      getDesks().forEach(function (d) { d.remove(); });
+      students = Array.isArray(data.students) ? data.students : [];
+      nameInput.value = data.names || students.map(function (s) { return s.name; }).join("\n");
+      let max = 0;
+      (data.desks || []).forEach(function (d) {
+        createDesk(d.type, d.x, d.y, d.rotation, d.label, d.seats || {});
+        const n = Number(d.label);
+        if (!Number.isNaN(n)) max = Math.max(max, n);
+      });
+      deskCounter = max + 1;
+      renderStudents();
+      selectDesk(null);
+      setStatus("Gespeicherter Sitzplan geladen.");
+    } catch (err) {
+      console.error(err);
+      setStatus("Gespeicherte Daten konnten nicht geladen werden.");
+    }
+  }
+
+  function wireEvents() {
+    addSingleBtn.addEventListener("click", function () { createDesk("single", 130 + Math.random() * 80, 130 + Math.random() * 80, 0); saveData(); });
+    addDoubleBtn.addEventListener("click", function () { createDesk("double", 130 + Math.random() * 80, 130 + Math.random() * 80, 0); saveData(); });
+    rotateBtn.addEventListener("click", function () {
+      if (!selectedDesk) return;
+      const next = (Number(selectedDesk.dataset.rotation || 0) + 90) % 360;
+      selectedDesk.dataset.rotation = String(next);
+      selectedDesk.style.transform = "rotate(" + next + "deg)";
+      keepInside(selectedDesk);
+      saveData();
+    });
+    deleteBtn.addEventListener("click", function () { if (!selectedDesk) return; selectedDesk.remove(); selectedDesk = null; saveData(); });
+    clearBtn.addEventListener("click", function () { getDesks().forEach(function (d) { d.remove(); }); selectedDesk = null; saveData(); });
+    clearSeatsBtn.addEventListener("click", function () { clearSeats(); saveData(); });
+    saveBtn.addEventListener("click", function () { saveData(); setStatus("Gespeichert."); });
+    loadBtn.addEventListener("click", loadData);
+    applyNamesBtn.addEventListener("click", buildStudentsFromNames);
+    importExcelBtn.addEventListener("click", importFile);
+    assignBtn.addEventListener("click", calculate);
+    studentList.addEventListener("change", function (e) { updateStudentFromControl(e.target); });
+    room.addEventListener("pointerdown", function (e) { if (e.target === room) selectDesk(null); });
+    document.addEventListener("keydown", function (e) {
+      if (!selectedDesk) return;
+      if (e.key === "Delete" || e.key === "Backspace") { selectedDesk.remove(); selectedDesk = null; saveData(); }
+      if (e.key.toLowerCase() === "r") rotateBtn.click();
+    });
+  }
+
+  function init() {
+    wireEvents();
+    createDesk("double", 420, 180, 0, "1");
+    createDesk("double", 620, 180, 0, "2");
+    createDesk("single", 520, 320, 0, "3");
+    deskCounter = 4;
+    selectDesk(null);
+    renderStudents();
+    setStatus("Bereit. Skript geladen.");
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
