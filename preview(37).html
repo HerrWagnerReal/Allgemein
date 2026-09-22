@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Geradengleichungen – Scribble</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#173e57;background:#f1f6fa}*{box-sizing:border-box}body{margin:0}button,input{font:inherit}button{cursor:pointer;touch-action:manipulation}
+main{max-width:1230px;margin:auto;padding:18px clamp(10px,2vw,28px) 34px}header{display:flex;justify-content:space-between;gap:12px;align-items:start}h1{font-size:clamp(1.35rem,2.6vw,2rem);margin:0}header p{margin:6px 0 16px;color:#587588}.badge{background:#dcedfa;border-radius:30px;padding:8px 13px;color:#185777;font-weight:750;white-space:nowrap}
+.layout{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(260px,.85fr);gap:16px;align-items:start}.card{border:1px solid #dae7ef;border-radius:17px;background:#fff;padding:clamp(13px,2vw,24px);box-shadow:0 7px 25px #163c5b10}h2{margin:0 0 10px;font-size:1.12rem}.intro{margin:0 0 14px;line-height:1.45;color:#49687c}.actions{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:15px}.action{border:1.5px solid #abc9d9;border-radius:10px;background:#eaf4f9;color:#195675;padding:9px 11px;min-height:44px;font-weight:750}.action.active{background:#176b96;color:white;border-color:#176b96}button:focus-visible,input:focus-visible{outline:3px solid #eea231;outline-offset:2px}
+.paper{border:1px solid #c4dce8;border-radius:13px;overflow:hidden}.row{display:grid;grid-template-columns:minmax(0,1fr) minmax(112px,25%);min-height:57px;background:#fff}.row+.row{border-top:1px solid #dceaf0}.row.current{background:#f2f9fd}.row.next{background:#fffaf0;min-height:70px}.formula{min-width:0;display:flex;gap:7px;align-items:center;padding:7px 11px}.formula .side{min-width:0;flex:1;overflow-wrap:anywhere;font-size:clamp(1.07rem,2.3vw,1.5rem);font-weight:680}.formula .left{text-align:right}.equals{font-size:1.4rem;color:#337398;font-weight:850}.operation{border-left:3px solid #7c9caf;padding:7px 9px;display:flex;align-items:center;gap:5px;min-width:0;overflow-wrap:anywhere;color:#285b78;font-weight:680}.operation .mark{font-size:1.35rem}.operation input{width:100%;min-width:0;min-height:45px;border:1.5px solid #9fc1d3;border-radius:8px;background:#fff;padding:7px;font-size:1.16rem}.row.next input{width:100%;min-width:0;min-height:48px;border:1.5px solid #d4ad69;border-radius:9px;background:#fffdf8;padding:8px;font-size:clamp(1.05rem,2.3vw,1.4rem);font-weight:650;color:#173e57}.row.next .operation{font-size:.88rem;line-height:1.2;color:#876329}.hint{margin:11px 0;color:#60798a;font-size:.91rem;line-height:1.4}.feedback{min-height:47px;background:#e9f4fb;color:#174f71;border-radius:10px;padding:11px 13px;margin:13px 0;line-height:1.4}.feedback.error{background:#fff0e8;color:#923e24}.feedback.success{background:#e3f6e8;color:#17613c}
+.bottom{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}.bottom button{border:1px solid #b6ccda;background:#fff;color:#235a7c;border-radius:10px;min-height:45px;padding:10px 13px;font-weight:750}.bottom #verify{background:#17729e;border-color:#17729e;color:#fff}.bottom button:disabled{opacity:.45}.checklist{list-style:none;padding:0;margin:0;display:grid;gap:11px}.checklist li{display:flex;gap:10px;padding:11px;background:#f2f7fa;border-radius:10px;line-height:1.35}.checklist .icon{flex:none;width:24px;height:24px;border:2px solid #a6bdca;border-radius:50%;color:transparent;text-align:center;font-weight:800}.checklist .done{background:#e5f6eb}.checklist .done .icon{background:#278653;border-color:#278653;color:#fff}.checklist small{display:block;margin-top:3px;color:#60798a}.goal{background:#eaf4fa;padding:13px;border-radius:10px;margin-top:17px;line-height:1.45}.example{line-height:1.5;color:#597487}.example code{background:#edf4f8;color:#234f69;border-radius:5px;padding:1px 4px}
+@media(max-width:820px){.layout{grid-template-columns:1fr}.sidebar{display:grid;grid-template-columns:1fr 1fr;gap:14px}}@media(max-width:540px){main{padding:10px 7px 20px}.sidebar{display:block}.sidebar .card+.card{margin-top:12px}.card{padding:12px}.row{grid-template-columns:minmax(0,1fr) minmax(96px,28%)}.formula{gap:4px;padding:6px}.operation{padding:5px;gap:3px}.operation input,.row.next input{padding:5px;font-size:1rem}.action{padding:7px}}
+.keypad{display:flex;align-items:center;flex-wrap:wrap;gap:5px;margin:10px 0 0}.keypad-label{color:#597384;font-size:.85rem;margin-right:4px}.keypad button{border:1px solid #bfd4e1;background:#f6fbfe;border-radius:8px;min-width:34px;min-height:34px;color:#205979;font-weight:700}.keypad button:focus-visible{outline:3px solid #eea231;outline-offset:2px}
+.feedback.wait{background:#fff5dc;color:#755418}
+</style></head>
+<body><main><header><div><h1>Geradengleichungen umstellen</h1><p>Schreibe jeden Schritt selbst mit dem Apple Pencil.</p></div><span class="badge" id="badge"></span></header>
+<div class="layout"><section class="card"><h2>Dein Rechenweg</h2><p class="intro">Schreibe die <strong>ganze Operation rechts neben den Strich</strong>, z. B. <strong>−4</strong> oder <strong>:2</strong>. Darunter schreibst du die neue Gleichung. Die Prüfung läuft während der Eingabe.</p>
+<div id="paper" class="paper" aria-label="Rechenweg"></div>
+<div id="keypad" class="keypad" aria-label="Zeichen zum Korrigieren"><span class="keypad-label">Zeichen korrigieren:</span></div>
+<p class="hint"><strong>Operationen:</strong> +3x, −4, ·2, :2 (auch /2). Schreibe <strong>zusammenfassen</strong> oder <strong>anordnen</strong> für diese Schritte. Brüche: <strong>3/2x</strong>, <strong>−3/2x</strong> oder <strong>−x/2</strong>. <span id="allowedLetters"></span> Gleichartige Terme sofort zusammenfassen.</p>
+<div id="feedback" class="feedback" role="status" aria-live="polite"></div>
+<div class="bottom"><button id="undo">↶ Schritt zurück</button><button id="verify">Richtigen Schritt übernehmen ✓</button><button id="next">Neue Aufgabe →</button></div></section>
+<div class="sidebar"><section class="card"><h2>Checkliste</h2><ul id="checklist" class="checklist"></ul><div class="goal"><strong>Ziel: y = mx + b</strong><br>Rechts steht x vor der Zahl.</div></section>
+<section class="card"><h2>Beispiel</h2><p class="example">Aus <code>2y+4x=8</code>: Rechts <code>−4x</code> schreiben und darunter <code>2y=8−4x</code> eintragen. Danach rechts <code>:2</code> und darunter <code>y=4−2x</code> schreiben.</p></section></div></div></main>
+<script>
+(() => {
+'use strict';
+const $=id=>document.getElementById(id);
+const tasks=[['2y+3x+4','10'],['4x+3y−6','9+x'],['5y−2x+3x','15−5'],['6x+2y+4','2x+12'],['−3y+6x','9'],['2x+4y−8','6']];
+const labels={add:'Addition',subtract:'Subtraktion',multiply:'Multiplikation',divide:'Division',combine:'Zusammenfassen',arrange:'Anordnen'};
+let task=0,current,history=[],lastInputId='operand';
+const gcd=(a,b)=>b?gcd(b,a%b):Math.abs(a)||1;
+function q(n,d=1){if(!Number.isSafeInteger(n)||!Number.isSafeInteger(d)||!d)throw Error('Zahl zu groß oder Division durch 0');if(d<0){n=-n;d=-d}const g=gcd(n,d);return {n:n/g,d:d/g}}
+const plus=(a,b)=>q(a.n*b.d+b.n*a.d,a.d*b.d),times=(a,b)=>q(a.n*b.n,a.d*b.d),divide=(a,b)=>q(a.n*b.d,a.d*b.n),neg=a=>q(-a.n,a.d),equal=(a,b)=>a.n===b.n&&a.d===b.d;
+function numeric(raw){
+  if(!/^\d+(?:\.\d+)?(?:\/\d+(?:\.\d+)?)?$/.test(raw))throw Error('Schreibe eine Zahl oder einen Bruch wie 3/2.');
+  const decimal=s=>{const p=s.split('.');return q(Number(p.join('')),10**(p[1]?.length||0))};
+  const p=raw.split('/');return p.length===1?decimal(p[0]):divide(decimal(p[0]),decimal(p[1]));
+}
+function parseTerm(raw){
+  const s=raw.replace(/·(?=[xy])/g,'').replace(/\*(?=[xy])/g,'');
+  let m=s.match(/^(\d+(?:\.\d+)?)?([xy])\/(\d+(?:\.\d+)?)$/);
+  if(m)return {kind:m[2],coef:divide(m[1]?numeric(m[1]):q(1),numeric(m[3]))};
+  m=s.match(/^(\d+(?:\.\d+)?(?:\/\d+(?:\.\d+)?)?)?([xy])$/);
+  if(m)return {kind:m[2],coef:m[1]?numeric(m[1]):q(1)};
+  return {kind:'c',coef:numeric(s)};
+}
+function normalizeEntry(raw){
+  const fractions={'½':'1/2','¼':'1/4','¾':'3/4','⅓':'1/3','⅔':'2/3'};
+  let text=raw.trim().toLowerCase().replace(/[−–—]/g,'-').replace(/[⁄∕]/g,'/').replace(/,/g,'.').replace(/\s/g,'').replace(/[½¼¾⅓⅔]/g,c=>fractions[c]);
+  const allowed=new Set((tasks[task%tasks.length][0]+tasks[task%tasks.length][1]).toLowerCase().match(/[a-z]/g)||[]);
+  const corrections=[];
+  for(const [letter,digit] of [['z','2'],['b','3'],['g','9'],['o','0'],['i','1'],['l','1'],['s','5']]){
+    if(!allowed.has(letter)&&text.includes(letter)){text=text.split(letter).join(digit);corrections.push(letter.toUpperCase()+' → '+digit)}
+  }
+  text=text.replace(/\(([+-]?\d+(?:\.\d+)?\/\d+(?:\.\d+)?)\)/g,'$1');
+  const fixed=text.replace(/([0-9xy)])t(?=[0-9xy(])/g,'$1+');
+  if(fixed!==text)corrections.push('t → +');
+  const unknown=[...new Set((fixed.match(/\p{L}/gu)||[]).filter(c=>!allowed.has(c)))];
+  if(unknown.length)throw Error('Scribble hat „'+unknown.join(', ')+'“ erkannt. In dieser Aufgabe sind nur '+[...allowed].join(' und ')+' als Buchstaben erlaubt. Korrigiere das Zeichen im Feld.');
+  return {text:fixed,corrections};
+}
+function parseSide(raw){
+  const s=normalizeEntry(raw).text.replace(/×/g,'*');
+  if(!s)throw Error('Schreibe links und rechts eine Gleichungsseite.');
+  const terms=[];let i=0;
+  while(i<s.length){let sign=1;if(s[i]==='+'||s[i]==='-')sign=s[i++]==='-'?-1:1;
+    const start=i;while(i<s.length&&s[i]!=='+'&&s[i]!=='-')i++;
+    if(start===i)throw Error('Prüfe die Vorzeichen.');const t=parseTerm(s.slice(start,i));if(sign<0)t.coef=neg(t.coef);terms.push(t)}
+  return terms;
+}
+const parse=(l,r)=>({left:parseSide(l),right:parseSide(r)});
+function sum(terms){const out={x:q(0),y:q(0),c:q(0)};for(const t of terms)out[t.kind]=plus(out[t.kind],t.coef);return out}
+const same=(a,b)=>['x','y','c'].every(k=>equal(a[k],b[k]));
+const dup=side=>side.some((t,i)=>side.slice(i+1).some(u=>u.kind===t.kind));
+const unreduced=side=>dup(side)||side.some(t=>t.coef.n===0&&(side.length>1||t.kind!=='c'));
+function status(){
+  const l=current.parsed.left,r=current.parsed.right;
+  const combined=!unreduced(l)&&!unreduced(r),isolated=l.length===1&&l[0].kind==='y'&&equal(l[0].coef,q(1))&&r.every(t=>t.kind!=='y');
+  const arranged=combined&&isolated&&r.every((t,i)=>i===0||r[i-1].kind!=='c'||t.kind==='c');
+  return {combined,isolated,arranged};
+}
+function node(tag,cls,content){const n=document.createElement(tag);if(cls)n.className=cls;n.textContent=content;return n}
+function field(id,placeholder,label){
+  const n=document.createElement('input');n.id=id;n.type='text';n.placeholder=placeholder;n.setAttribute('aria-label',label);n.setAttribute('autocorrect','off');n.autocomplete='off';n.autocapitalize='off';n.spellcheck=false;n.inputMode='text';return n;
+}
+function formula(l,r,write){
+  const box=node('div','formula','');
+  if(write)box.append(field('newLeft','linke Seite','Nächste Gleichung linke Seite'),node('span','equals','='),field('newRight','rechte Seite','Nächste Gleichung rechte Seite'));
+  else box.append(node('span','side left',l),node('span','equals','='),node('span','side right',r));
+  return box;
+}
+function show(msg,type='info'){$('feedback').className='feedback'+(type==='error'?' error':type==='success'?' success':type==='wait'?' wait':'');$('feedback').textContent=msg}
+function draw(){
+  const paper=$('paper');paper.replaceChildren();
+  for(const h of history){const row=node('div','row old','');row.append(formula(h.left,h.right,false),node('div','operation',h.mark));paper.append(row)}
+  const row=node('div','row current',''),op=node('div','operation','');row.append(formula(current.left,current.right,false));
+  op.append(field('operand','z. B. −4, :2','Ganze Operation rechts neben dem Strich'));row.append(op);paper.append(row);
+  const next=node('div','row next','');next.append(formula('','',true),node('div','operation','Ergebnis links und rechts schreiben'));paper.append(next);
+  const s=status(),spec=[['combined','Terme zusammenfassen','Bei jeder Umformung sofort verrechnen und wegfallende Terme streichen.'],['isolated','Variablen auf eine Seite bringen','Links steht y allein, rechts kein y.'],['arranged','Anordnen','Rechts steht der x-Term vor der Zahl.']];
+  $('checklist').replaceChildren(...spec.map(([key,title,hint])=>{const li=node('li',s[key]?'done':'',''),words=node('span','','');words.append(node('strong','',title),node('small','',hint));li.append(node('span','icon','✓'),words);return li}));
+  $('undo').disabled=!history.length;
+  if(s.arranged)show('Geschafft! Die Gleichung steht in der Normalform y = mx + b.','success');
+}
+function operation(raw){
+  let text=raw.trim().toLowerCase().replace(/\s/g,'').replace(/[−–—]/g,'-').replace(/[×⋅∙•]/g,'·');
+  if(['zusammenfassen','zusammen','zf'].includes(text))return {action:'combine',text:'zusammenfassen',corrections:[]};
+  if(['anordnen','ordnen','ao'].includes(text))return {action:'arrange',text:'anordnen',corrections:[]};
+  const corrections=[];
+  if(/^t(?=[0-9xy(bzgoils])/.test(text)){text='+'+text.slice(1);corrections.push('t → +')}
+  if(/^x(?=[0-9(bzgoils])/.test(text)){text='·'+text.slice(1);corrections.push('x → ·')}
+  const kind={'+':'add','-':'subtract','·':'multiply','*':'multiply',':':'divide','/':'divide'}[text[0]];
+  if(!kind)throw Error('Schreibe rechts z. B. −4, +3x, ·2 oder :2. Für andere Schritte: „zusammenfassen“ oder „anordnen“.');
+  const operand=normalizeEntry(text.slice(1));corrections.push(...operand.corrections);
+  if(!operand.text)throw Error('Nach dem Rechenzeichen fehlt ein Term oder eine Zahl.');
+  let value;
+  if(kind==='add'||kind==='subtract'){
+    const terms=parseSide(operand.text);if(terms.length!==1)throw Error('Schreibe nach + oder − genau einen Term, z. B. −4x.');value=terms[0];
+  }else{
+    const sign=operand.text[0]==='-'?-1:1;
+    value=numeric(operand.text.replace(/^[+-]/,''));if(!value.n)throw Error('Mit 0 darfst du weder multiplizieren noch dividieren.');
+    if(sign<0)value=neg(value);
+  }
+  return {action:kind,value,text:(kind==='multiply'?'·':kind==='divide'?':':text[0])+operand.text,corrections};
+}
+function multiset(a,b){
+  if(a.length!==b.length)return false;const used=new Set();
+  return a.every(t=>{const i=b.findIndex((u,j)=>!used.has(j)&&u.kind===t.kind&&equal(u.coef,t.coef));if(i<0)return false;used.add(i);return true});
+}
+function checkStep(){
+  const raw=$('operand').value.trim(),left=$('newLeft').value.trim(),right=$('newRight').value.trim();
+  if(!raw)return {state:'wait',message:left||right?'Die Operation rechts fehlt noch. Deine geschriebene Gleichung bleibt erhalten.':'Schreibe rechts eine Operation und darunter die neue Gleichung.'};
+  if(!left||!right)return {state:'wait',message:'Ergänze beide Seiten der nächsten Gleichung. Die bisherigen Eingaben bleiben stehen.'};
+  try{
+    const op=operation(raw),l=normalizeEntry(left),r=normalizeEntry(right),result=parse(l.text,r.text);
+    const corrections=[...new Set([...op.corrections,...l.corrections,...r.corrections])];
+    const old=current.parsed,ol=sum(old.left),or=sum(old.right),nl=sum(result.left),nr=sum(result.right),action=op.action,value=op.value;
+    let error='';
+    if(action==='add'||action==='subtract'){
+      const change={kind:value.kind,coef:action==='add'?value.coef:neg(value.coef)};
+      if(!same(sum([...old.left,change]),nl)||!same(sum([...old.right,change]),nr))
+        error='Der Term muss auf beiden Seiten '+(action==='add'?'addiert':'subtrahiert')+' werden.';
+    }else if(action==='multiply'||action==='divide'){
+      const factor=action==='multiply'?value:divide(q(1),value);
+      const scaled=m=>Object.fromEntries(['x','y','c'].map(k=>[k,times(m[k],factor)]));
+      if(!same(scaled(ol),nl)||!same(scaled(or),nr))error='Jeder Term auf beiden Seiten muss mit dem Faktor umgerechnet werden.';
+    }else if(!same(ol,nl)||!same(or,nr))error='Beim '+labels[action]+' müssen beide Seiten jeweils gleichwertig bleiben.';
+    else if(action==='combine'){
+      if(!dup(old.left)&&!dup(old.right))error='Hier gibt es keine gleichartigen Terme zum Zusammenfassen.';
+      else if(result.left.length+result.right.length>=old.left.length+old.right.length)error='Fasse mindestens zwei gleichartige Terme zusammen.';
+    }else{
+      if(!multiset(old.left,result.left)||!multiset(old.right,result.right))error='Beim Anordnen dürfen sich nur die Positionen der Terme ändern.';
+      else{
+        const signature=s=>s.map(t=>t.kind+':'+t.coef.n+'/'+t.coef.d).join(',');
+        if(signature(old.left)===signature(result.left)&&signature(old.right)===signature(result.right))error='Ändere die Reihenfolge der Terme.';
+      }
+    }
+    if(!error&&(unreduced(result.left)||unreduced(result.right)))error='Fasse gleichartige Terme direkt zusammen. +4 und −4 fallen beispielsweise weg.';
+    const hint=corrections.length?' Gelesene Zeichen: '+corrections.join(', ')+'. Prüfe die vorgeschlagenen Ziffern.':'';
+    if(error)return {state:'error',message:error+hint};
+    return {state:'ok',message:corrections.length?'Rechnerisch richtig, falls die erkannten Ziffern stimmen.'+hint+' Zum Bestätigen „Schritt übernehmen“ tippen.':'Richtig! Du kannst diesen Schritt übernehmen.',op,l,r,result,corrections};
+  }catch(e){return {state:'error',message:e.message}}
+}
+function live(){
+  const check=checkStep();show(check.message,check.state==='ok'?(check.corrections.length?'wait':'success'):check.state);
+  return check;
+}
+function verify(){
+  const check=live();if(check.state!=='ok')return;
+  if(check.corrections.length){
+    $('operand').value=check.op.text;$('newLeft').value=check.l.text;$('newRight').value=check.r.text;
+    return show('Ich habe '+check.corrections.join(', ')+' eingesetzt. Prüfe die sichtbaren Felder und tippe dann nochmals auf „Schritt übernehmen“.','wait');
+  }
+  history.push({left:current.left,right:current.right,mark:check.op.text,parsed:current.parsed});
+  current={left:check.l.text,right:check.r.text,parsed:check.result};draw();
+  if(!status().arranged)show('Richtig! Schreibe nun den nächsten Schritt.','success');
+  $('operand').focus();
+}
+function start(){
+  const [left,right]=tasks[task%tasks.length];current={left,right,parsed:parse(left,right)};history=[];
+  $('badge').textContent='Aufgabe '+(task%tasks.length+1)+' / '+tasks.length;
+  const vars=[...new Set((left+right).match(/[xy]/g)||[])];
+  $('allowedLetters').textContent='Zugelassene Variablen: '+vars.join(', ')+'. Y und y gelten als gleich. Z/2, B/3, G/9 und ähnliche Verwechslungen werden sichtbar zur Prüfung vorgeschlagen.';
+  const keys='0123456789+−/·:'.split('').concat(vars);
+  $('keypad').replaceChildren(node('span','keypad-label','Zeichen korrigieren:'),...keys.map(symbol=>{
+    const button=node('button','',symbol);button.type='button';button.dataset.symbol=symbol;button.setAttribute('aria-label','Zeichen '+symbol+' einfügen');return button;
+  }));
+  draw();show('Schreibe eine Operation und darunter die neue Gleichung. Die Prüfung läuft automatisch.');
+}
+$('paper').addEventListener('focusin',e=>{if(['operand','newLeft','newRight'].includes(e.target.id))lastInputId=e.target.id});
+$('paper').addEventListener('input',live);
+$('keypad').addEventListener('click',e=>{
+  const button=e.target.closest('button[data-symbol]');if(!button)return;
+  const input=$(lastInputId)||$('operand'),symbol=button.dataset.symbol;
+  const start=input.selectionStart??input.value.length,end=input.selectionEnd??start;
+  input.setRangeText(symbol,start,end,'end');input.focus();live();
+});
+$('verify').addEventListener('click',verify);
+$('undo').addEventListener('click',()=>{if(!history.length)return;const p=history.pop();current={left:p.left,right:p.right,parsed:p.parsed};draw();show('Der letzte Schritt wurde zurückgenommen.')});
+$('next').addEventListener('click',()=>{task++;start()});start();
+})();
+</script></body></html>
