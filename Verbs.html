@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Irregular Verb Drop – 8. &amp; 10. Klasse</title>
+<style>
+:root{--bg:#0b1020;--panel:#11182c;--line:#2b3b61;--text:#f7f9ff;--muted:#aeb9d4;--good:#2bd181;--bad:#ff6372;--accent:#72a8ff;--gold:#ffd166}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+body{touch-action:manipulation}button,input{font:inherit}button{cursor:pointer}
+#app{width:100vw;height:100dvh;min-height:560px;display:grid;grid-template-rows:auto 1fr auto;gap:8px;padding:8px;background:radial-gradient(circle at 50% -20%,#1c3467 0,#0b1020 46%)}
+.topbar{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}.brand{display:flex;gap:10px;align-items:center}h1{font-size:clamp(18px,2.5vw,30px);margin:0}.sub{color:var(--muted);font-size:12px}
+.hud{display:flex;gap:6px}.stat{min-width:70px;background:#11182cdd;border:1px solid var(--line);border-radius:11px;padding:5px 8px;text-align:center}.stat b{display:block;font-size:17px}.stat span{display:block;color:var(--muted);font-size:9px;text-transform:uppercase}
+#roundPoints{color:var(--gold)}#game{position:relative;min-height:0;overflow:hidden;border:1px solid var(--line);border-radius:20px;background:linear-gradient(#1b2949b8,#0c1223)}
+#stars{position:absolute;inset:0;opacity:.15;background-image:radial-gradient(circle,#fff 1px,transparent 1.5px),radial-gradient(circle,#fff 1px,transparent 1.5px);background-size:53px 53px,79px 79px}
+#lanes{position:absolute;inset:0 0 112px;display:grid;grid-template-columns:repeat(5,1fr)}#lanes div{border-right:1px dashed #aeb9d41c}
+#questionCounter{position:absolute;top:12px;right:12px;z-index:12;padding:7px 11px;border-radius:999px;background:#050912bb;border:1px solid var(--line);font-size:12px;font-weight:800;color:#cbd5ea}#questionCounter b{color:var(--gold)}
+#answer{position:absolute;z-index:8;left:50%;top:44%;transform:translate(-50%,-50%);width:min(720px,94%);padding:17px;border-radius:20px;background:#0b1122f2;border:1px solid #35486f;box-shadow:0 20px 60px #0005}
+.hidden{display:none!important}.label{text-align:center;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.12em}#verb{text-align:center;font-size:clamp(32px,6vw,56px);font-weight:950;margin:4px 0 13px}
+.inputs{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end}label{display:block;color:#cbd5ea;font-size:11px;font-weight:800;margin:0 0 4px 2px}
+input{width:100%;height:48px;border:2px solid #3b4e76;border-radius:11px;background:#0e1629;color:white;padding:0 11px;font-size:17px;font-weight:800;outline:0}input:focus{border-color:var(--accent)}input.ok{border-color:var(--good)}input.bad{border-color:var(--bad)}
+#check{height:48px;padding:0 17px;border:0;border-radius:11px;background:var(--accent);color:#081224;font-weight:950}#hint{min-height:22px;text-align:center;margin-top:7px;color:#c9d3ea;font-size:12px;font-weight:700}#hint.bad{color:#ff9da6}#hint.good{color:#8ff0bc}
+#piece{position:absolute;z-index:5;top:5px;width:min(19%,185px);min-width:110px;padding:9px 5px;border-radius:13px;background:#f7f9ff;color:#13203a;border:3px solid white;text-align:center;font-weight:900;box-shadow:0 10px 26px #0004;touch-action:none;user-select:none}#piece .base{font-size:clamp(17px,2.2vw,27px)}#piece .forms{font-size:clamp(10px,1.2vw,14px);color:#415171;margin-top:3px}
+#bins{position:absolute;left:0;right:0;bottom:0;height:112px;display:grid;grid-template-columns:repeat(5,1fr);gap:5px;padding:6px;background:#070b17df;border-top:1px solid var(--line)}.bin{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;border:2px solid #ffffff20;border-radius:13px;background:#ffffff09;padding:4px;transition:.14s}.bin.active{transform:translateY(-4px);background:#72a8ff2c;border-color:var(--accent)}.bin.good{animation:good .4s}.bin.bad{animation:bad .4s}.icon{font-size:25px;line-height:1}.name{font-weight:900;font-size:clamp(9px,1.3vw,14px);margin-top:3px}.rule{font-size:9px;color:var(--muted)}
+@keyframes good{50%{background:#2bd18166;border-color:var(--good)}}@keyframes bad{50%{background:#ff637266;border-color:var(--bad)}}
+#feedback{position:absolute;z-index:15;top:13px;left:50%;transform:translateX(-50%);opacity:0;padding:8px 13px;border-radius:999px;background:#050912e8;border:1px solid var(--line);font-weight:850;font-size:13px;pointer-events:none;transition:.18s}#feedback.show{opacity:1;transform:translateX(-50%) translateY(4px)}#feedback.good{color:#8ff0bb}#feedback.bad{color:#ff9ca5}
+#overlay{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:18px;background:#04070fba;backdrop-filter:blur(9px)}.card{width:min(690px,96%);background:linear-gradient(#17213b,#10182d);border:1px solid #35466f;border-radius:22px;padding:22px;box-shadow:0 25px 80px #0007}.card h2{margin:0 0 8px;font-size:clamp(24px,4vw,38px)}.card p{color:#c9d3ea;line-height:1.45}.legend{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:15px 0}.legend div{background:#0d1529;border:1px solid var(--line);border-radius:10px;padding:8px 4px;text-align:center;font-size:11px}.legend b{display:block}.levelSelect{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:14px 0}.levelBtn{padding:13px 8px;border:2px solid #31436c;border-radius:13px;background:#0d1529;color:#dce5f8;font-weight:900}.levelBtn.selected{border-color:var(--accent);background:#72a8ff22;color:white}.levelNote{font-size:11px;color:var(--muted);text-align:center;margin:-6px 0 12px}.primary{width:100%;padding:13px;border:0;border-radius:13px;background:var(--accent);color:#081224;font-weight:950;font-size:17px}.score{font-size:52px;font-weight:950;color:var(--gold);margin:5px 0}
+footer{display:flex;align-items:center;justify-content:center;gap:7px}.ctrl{min-width:52px;height:48px;border-radius:12px;border:1px solid #31436c;background:#182442;color:white;font-size:22px;font-weight:900}.mini{height:42px;padding:0 11px;border-radius:11px;border:1px solid #2b3b61;background:#131d35;color:white;font-weight:800}
+@media(max-width:780px){#app{gap:5px;padding:5px}.topbar{grid-template-columns:1fr}.sub{display:none}.hud{display:grid;grid-template-columns:repeat(5,1fr)}.stat{min-width:0;padding:4px}.stat b{font-size:14px}.stat span{font-size:8px}#bins{height:96px;gap:3px;padding:4px}#lanes{inset-bottom:96px}.rule{display:none}#answer{top:42%;padding:12px}.inputs{grid-template-columns:1fr 1fr}#check{grid-column:1/3;height:44px}input{height:44px;font-size:15px}#verb{font-size:35px}#piece{min-width:0;width:19%;padding:7px 3px}footer{gap:4px}.ctrl{min-width:47px;height:45px}}
+</style>
+</head>
+<body>
+<div id="app">
+<header class="topbar">
+  <div class="brand"><h1>Irregular Verb Drop</h1><div class="sub">20 Aufgaben · Formen bilden · Kategorie treffen</div></div>
+  <div class="hud">
+    <div class="stat"><b id="score">0</b><span>Score</span></div>
+    <div class="stat"><b id="roundPoints">1000</b><span>Aufgabe</span></div>
+    <div class="stat"><b id="streak">0</b><span>Serie</span></div>
+    <div class="stat"><b id="level">1</b><span>Level</span></div>
+    <div class="stat"><b id="lives">❤❤❤</b><span>Leben</span></div>
+  </div>
+</header>
+<main id="game">
+  <div id="stars"></div><div id="lanes"><div></div><div></div><div></div><div></div><div></div></div>
+  <div id="questionCounter">Aufgabe <b id="qnum">0</b> / 20</div><div id="feedback"></div>
+  <section id="answer" class="hidden">
+    <div class="label">Bilde Simple Past und Past Participle</div><div id="verb">write</div>
+    <div class="inputs">
+      <div><label>Simple Past</label><input id="past" autocomplete="off" autocapitalize="none" spellcheck="false"></div>
+      <div><label>Past Participle</label><input id="part" autocomplete="off" autocapitalize="none" spellcheck="false"></div>
+      <button id="check">Prüfen</button>
+    </div>
+    <div id="hint">Die Punkte laufen bereits herunter.</div>
+  </section>
+  <div id="piece" class="hidden"><div class="base"></div><div class="forms"></div></div>
+  <div id="bins">
+    <div class="bin" data-cat="chicken"><div class="icon">🐔</div><div class="name">CHICKEN</div><div class="rule">alle 3 gleich</div></div>
+    <div class="bin" data-cat="echo"><div class="icon">🔊</div><div class="name">ECHO</div><div class="rule">2. = 3.</div></div>
+    <div class="bin" data-cat="cat"><div class="icon">🐱</div><div class="name">CAT</div><div class="rule">i → a → u</div></div>
+    <div class="bin" data-cat="sandwich"><div class="icon">🥪</div><div class="name">SANDWICH</div><div class="rule">1. = 3.</div></div>
+    <div class="bin" data-cat="others"><div class="icon">❓</div><div class="name">OTHERS</div><div class="rule">andere Muster</div></div>
+  </div>
+  <div id="overlay"><section class="card" id="card">
+    <h2>Irregular Verb Drop</h2>
+    <p>Wähle zuerst die <b>Vokabelstufe</b>. Danach kommen genau <b>20 Aufgaben</b>.</p>
+    <div class="levelSelect"><button class="levelBtn selected" data-level="8">📘 8. Klasse</button><button class="levelBtn" data-level="10">📗 10. Klasse</button></div>
+    <div class="levelNote">8. Klasse: 91 Verben · 10. Klasse: die separate Liste aus deinem ersten Blatt.</div>
+    <p>Infinitiv → Simple Past + Past Participle → Kategorie. Jede Aufgabe startet mit <b>1000 Punkten</b>; die Punkte sinken mit der Zeit.</p>
+    <div class="legend"><div>🐔<b>Chicken</b></div><div>🔊<b>Echo</b></div><div>🐱<b>Cat</b></div><div>🥪<b>Sandwich</b></div><div>❓<b>Others</b></div></div>
+    <button class="primary" id="start">20 Aufgaben starten</button>
+  </section></div>
+</main>
+<footer>
+  <button class="mini" id="pause">Pause</button><button class="ctrl" id="left">◀</button><button class="ctrl" id="down">▼</button><button class="ctrl" id="right">▶</button><button class="mini" id="restart">Neu</button>
+</footer>
+</div>
+<script>
+const POOLS={"8":[["be","was/were","been","others"],["beat","beat","beaten","others"],["become","became","become","sandwich"],["begin","began","begun","cat"],["bite","bit","bitten","others"],["bleed","bled","bled","echo"],["blow","blew","blown","others"],["break","broke","broken","others"],["bring","brought","brought","echo"],["build","built","built","echo"],["burn","burnt","burnt","echo"],["buy","bought","bought","echo"],["catch","caught","caught","echo"],["choose","chose","chosen","others"],["come","came","come","sandwich"],["cost","cost","cost","chicken"],["cut","cut","cut","chicken"],["do","did","done","others"],["dig","dug","dug","echo"],["draw","drew","drawn","others"],["drink","drank","drunk","cat"],["drive","drove","driven","others"],["eat","ate","eaten","others"],["fall","fell","fallen","others"],["feed","fed","fed","echo"],["feel","felt","felt","echo"],["fight","fought","fought","echo"],["find","found","found","echo"],["fly","flew","flown","others"],["forget","forgot","forgotten","others"],["freeze","froze","frozen","others"],["get","got","got","echo"],["give","gave","given","others"],["go","went","gone","others"],["grow","grew","grown","others"],["hang","hung","hung","echo"],["have","had","had","echo"],["hear","heard","heard","echo"],["hide","hid","hidden","others"],["hit","hit","hit","chicken"],["hold","held","held","echo"],["hurt","hurt","hurt","chicken"],["keep","kept","kept","echo"],["kneel","knelt","knelt","echo"],["know","knew","known","others"],["lead","led","led","echo"],["leave","left","left","echo"],["lend","lent","lent","echo"],["let","let","let","chicken"],["lose","lost","lost","echo"],["make","made","made","echo"],["mean","meant","meant","echo"],["meet","met","met","echo"],["pay","paid","paid","echo"],["put","put","put","chicken"],["read","read","read","echo"],["ride","rode","ridden","others"],["ring","rang","rung","cat"],["rise","rose","risen","others"],["run","ran","run","sandwich"],["say","said","said","echo"],["see","saw","seen","others"],["sell","sold","sold","echo"],["send","sent","sent","echo"],["set","set","set","chicken"],["sew","sewed","sewn","others"],["shake","shook","shaken","others"],["shoot","shot","shot","echo"],["show","showed","shown","others"],["sing","sang","sung","cat"],["sit","sat","sat","echo"],["sleep","slept","slept","echo"],["speak","spoke","spoken","others"],["speed","sped","sped","echo"],["spend","spent","spent","echo"],["spin","spun","spun","echo"],["spread","spread","spread","chicken"],["stand","stood","stood","echo"],["steal","stole","stolen","others"],["stick","stuck","stuck","echo"],["swim","swam","swum","cat"],["take","took","taken","others"],["teach","taught","taught","echo"],["tell","told","told","echo"],["think","thought","thought","echo"],["throw","threw","thrown","others"],["understand","understood","understood","echo"],["wake up","woke up","woken up","others"],["wear","wore","worn","others"],["win","won","won","echo"],["write","wrote","written","others"]],"10":[["be","was/were","been","others"],["bear","bore","borne","others"],["beat","beat","beaten","others"],["become","became","become","sandwich"],["begin","began","begun","cat"],["bend","bent","bent","echo"],["bet","bet","bet","chicken"],["bite","bit","bitten","others"],["bleed","bled","bled","echo"],["blow","blew","blown","others"],["break","broke","broken","others"],["breed","bred","bred","echo"],["bring","brought","brought","echo"],["build","built","built","echo"],["burn","burnt","burnt","echo"],["burst","burst","burst","chicken"],["buy","bought","bought","echo"],["catch","caught","caught","echo"],["choose","chose","chosen","others"],["come","came","come","sandwich"],["cost","cost","cost","chicken"],["cut","cut","cut","chicken"],["deal","dealt","dealt","echo"],["do","did","done","others"],["dig","dug","dug","echo"],["draw","drew","drawn","others"],["drink","drank","drunk","cat"],["drive","drove","driven","others"],["eat","ate","eaten","others"],["fall","fell","fallen","others"],["feed","fed","fed","echo"],["feel","felt","felt","echo"],["fight","fought","fought","echo"],["find","found","found","echo"],["fly","flew","flown","others"],["forget","forgot","forgotten","others"],["freeze","froze","frozen","others"],["get","got","got","echo"],["give","gave","given","others"],["go","went","gone","others"],["grow","grew","grown","others"],["hang","hung","hung","echo"],["have","had","had","echo"],["hear","heard","heard","echo"],["hide","hid","hidden","others"],["hit","hit","hit","chicken"],["hold","held","held","echo"],["hurt","hurt","hurt","chicken"],["keep","kept","kept","echo"],["kneel","knelt","knelt","echo"],["know","knew","known","others"],["lead","led","led","echo"],["leave","left","left","echo"],["lend","lent","lent","echo"],["let","let","let","chicken"],["light","lit","lit","echo"],["lose","lost","lost","echo"],["make","made","made","echo"],["mean","meant","meant","echo"],["meet","met","met","echo"],["pay","paid","paid","echo"],["put","put","put","chicken"],["quit","quit","quit","chicken"],["read","read","read","echo"],["reset","reset","reset","chicken"],["rewrite","rewrote","rewritten","others"],["ride","rode","ridden","others"],["ring","rang","rung","cat"],["rise","rose","risen","others"],["run","ran","run","sandwich"],["say","said","said","echo"],["see","saw","seen","others"],["seek","sought","sought","echo"],["sell","sold","sold","echo"],["send","sent","sent","echo"],["set","set","set","chicken"],["sew","sewed","sewn","others"],["shake","shook","shaken","others"],["shoot","shot","shot","echo"],["show","showed","shown","others"],["shut","shut","shut","chicken"],["sing","sang","sung","cat"],["sink","sank","sunk","cat"],["sit","sat","sat","echo"],["sleep","slept","slept","echo"],["slide","slid","slid","echo"],["speak","spoke","spoken","others"],["speed","sped","sped","echo"],["spend","spent","spent","echo"],["spin","spun","spun","echo"],["spread","spread","spread","chicken"],["stand","stood","stood","echo"],["steal","stole","stolen","others"],["stick","stuck","stuck","echo"],["sting","stung","stung","echo"],["sweep","swept","swept","echo"],["swim","swam","swum","cat"],["swing","swung","swung","echo"],["take","took","taken","others"],["teach","taught","taught","echo"],["tell","told","told","echo"],["think","thought","thought","echo"],["throw","threw","thrown","others"],["understand","understood","understood","echo"],["wake up","woke up","woken up","others"],["wear","wore","worn","others"],["win","won","won","echo"],["write","wrote","written","others"]]};
+let V=POOLS["8"];
+let selectedLevel="8";
+const MAX=20, CAT={chicken:"Chicken",echo:"Echo",cat:"Cat",sandwich:"Sandwich",others:"Others"};
+const $=id=>document.getElementById(id);
+let score=0,streak=0,level=1,lives=3,correct=0,question=0,current=null,phase="idle",lane=2,y=0;
+let running=false,paused=false,fast=false,last=0,raf=0,recent=[],feedbackTimer;
+
+function norm(x){return String(x||"").toLowerCase().trim().replace(/[’']/g,"'").replace(/\s+/g," ")}
+function match(x,e){let a=norm(x), b=norm(e); if(a===b)return true; if(b.includes("/")) return b.split("/").some(v=>a===v.trim()); return false}
+function choose(){let i; do i=Math.floor(Math.random()*V.length); while(recent.includes(i)&&recent.length<V.length-1); recent.push(i); if(recent.length>12)recent.shift(); return V[i]}
+function metrics(){let w=$("game").clientWidth,h=$("game").clientHeight,bh=$("bins").clientHeight,tw=$("piece").offsetWidth||120,th=$("piece").offsetHeight||55;return {w,h,bh,tw,th,target:h-bh-th-5}}
+function xFor(n){let m=metrics();return n*m.w/5+(m.w/5-m.tw)/2}
+function render(){$("piece").style.transform=`translate3d(${xFor(lane)}px,${y}px,0)`;document.querySelectorAll(".bin").forEach((b,i)=>b.classList.toggle("active",phase==="drop"&&i===lane))}
+function hud(){$("score").textContent=score;$("roundPoints").textContent=Math.round(Math.max(0,round));$("streak").textContent=streak;$("level").textContent=level;$("lives").textContent="❤".repeat(lives)+"♡".repeat(3-lives);$("qnum").textContent=question}
+function fb(t,good){clearTimeout(feedbackTimer);$("feedback").textContent=t;$("feedback").className="show "+(good?"good":"bad");feedbackTimer=setTimeout(()=>$("feedback").className="",900)}
+let round=1000;
+function newRound(){if(question>=MAX)return finish(); question++; current=choose(); round=1000; phase="answer"; lane=2;y=5; fast=false;
+ $("verb").textContent=current[0];$("past").value="";$("part").value="";$("past").className="";$("part").className="";$("hint").textContent="Die Punkte laufen bereits herunter.";$("hint").className="";
+ $("piece").classList.add("hidden");$("answer").classList.remove("hidden");hud();setTimeout(()=>{if(running&&!paused&&phase==="answer")$("past").focus()},60)}
+function check(){if(!running||paused||phase!=="answer")return;let a=match($("past").value,current[1]),b=match($("part").value,current[2]);
+ $("past").className=a?"ok":"bad";$("part").className=b?"ok":"bad";
+ if(a&&b){$("hint").textContent="Richtig – jetzt Kategorie treffen!";$("hint").className="good";phase="drop";$("answer").classList.add("hidden");$("piece").classList.remove("hidden");$("piece").querySelector(".base").textContent=current[0];$("piece").querySelector(".forms").textContent=current[1]+" → "+current[2];y=5;render()}
+ else {$("hint").textContent="Mindestens eine Form ist noch falsch."; $("hint").className="bad"}}
+function resolve(){if(phase!=="drop")return;let chosen=document.querySelectorAll(".bin")[lane].dataset.cat,target=current[3],bins=document.querySelectorAll(".bin");
+ $("piece").classList.add("hidden");bins.forEach(b=>b.classList.remove("active"));
+ if(chosen===target){let gain=Math.max(0,Math.round(round));score+=gain;streak++;correct++;bins[lane].classList.add("good");fb("Richtig! +"+gain,true)}
+ else {lives--;streak=0;bins[lane].classList.add("bad");fb("Falsch – "+current[0]+" gehört zu "+CAT[target],false)}
+ if(correct&&correct%8===0)level++;
+ hud();phase="between";
+ if(lives<=0||question>=MAX){setTimeout(finish,550);return}
+ setTimeout(()=>{if(running&&!paused)newRound()},550)}
+function finish(){running=false;paused=false;phase="idle";cancelAnimationFrame(raf);$("piece").classList.add("hidden");$("answer").classList.add("hidden");
+ let best=Math.max(score,Number(localStorage.getItem("verbDropBest20")||0));localStorage.setItem("verbDropBest20",best);
+ $("card").innerHTML=`<h2>Durchgang beendet!</h2><p><b>${selectedLevel}. Klasse</b> · Alle <b>${MAX} Aufgaben</b> sind abgeschlossen.</p><div class="score">${score}</div><p><b>Schlussscore</b></p><p>Richtig gelöst: <b>${correct} / ${MAX}</b><br>Bestwert auf diesem Gerät: <b>${best}</b></p><button class="primary" id="again">Noch einmal spielen</button>`;
+ $("overlay").classList.remove("hidden");$("again").onclick=start}
+function start(){score=0;streak=0;level=1;lives=3;correct=0;question=0;recent=[];running=true;paused=false;phase="idle";last=performance.now();$("overlay").classList.add("hidden");$("pause").textContent="Pause";newRound();raf=requestAnimationFrame(loop)}
+function togglePause(){if(!running)return;paused=!paused;$("pause").textContent=paused?"Weiter":"Pause";if(!paused)last=performance.now()}
+function move(d){if(running&&!paused&&phase==="drop"){lane=Math.max(0,Math.min(4,lane+d));render()}}
+function loop(t){if(!running)return;let dt=Math.min(.05,(t-last)/1000);last=t;if(!paused){if(phase==="answer"||phase==="drop"){round=Math.max(0,round-(10+(level-1)*1.5)*dt);hud()}if(phase==="drop"){y+=(fast?220:42+(level-1)*7)*dt;let m=metrics();if(y>=m.target){y=m.target;render();resolve()}else render()}}raf=requestAnimationFrame(loop)}
+document.querySelectorAll(".levelBtn").forEach(btn=>btn.onclick=()=>{selectedLevel=btn.dataset.level;V=POOLS[selectedLevel];document.querySelectorAll(".levelBtn").forEach(b=>b.classList.toggle("selected",b===btn));});
+$("start").onclick=start;$("restart").onclick=start;$("pause").onclick=togglePause;$("check").onclick=check;$("left").onclick=()=>move(-1);$("right").onclick=()=>move(1);$("down").onpointerdown=()=>fast=true;$("down").onpointerup=()=>fast=false;$("down").onpointercancel=()=>fast=false;
+$("past").onkeydown=e=>{if(e.key==="Enter"){$("part").focus();e.preventDefault()}};$("part").onkeydown=e=>{if(e.key==="Enter"){check();e.preventDefault()}};
+document.onkeydown=e=>{if(document.activeElement===$("past")||document.activeElement===$("part"))return;if(e.key==="ArrowLeft")move(-1);if(e.key==="ArrowRight")move(1);if(e.key==="ArrowDown")fast=true;if(e.key===" "){fast=true;e.preventDefault()}if(e.key.toLowerCase()==="p")togglePause()};
+document.onkeyup=e=>{if(e.key==="ArrowDown"||e.key===" ")fast=false};
+let drag=false;
+$("piece").onpointerdown=e=>{if(phase==="drop"&&!paused){drag=true;$("piece").setPointerCapture(e.pointerId)}};
+$("piece").onpointermove=e=>{if(!drag)return;let r=$("game").getBoundingClientRect(),n=Math.max(0,Math.min(4,Math.floor((e.clientX-r.left)/(r.width/5))));lane=n;render()};
+$("piece").onpointerup=()=>drag=false;$("piece").onpointercancel=()=>drag=false;
+window.onresize=()=>{if(phase==="drop")render()};
+</script>
+</body>
+</html>
