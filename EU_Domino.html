@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5,viewport-fit=cover">
+<meta name="theme-color" content="#e9f1f6">
+<title>Domino – Die EU-Länder</title>
+<style>
+  :root{--ink:#203a50;--blue:#557e9c;--light:#e9f1f6;--tilew:212px;--tileh:94px;--border:#83a6bd}
+  *{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden}
+  body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);background:#edf3f7}
+  button{font:inherit;cursor:pointer}button:focus-visible{outline:3px solid #ed9d31;outline-offset:2px}
+  .app{height:100%;height:100dvh;display:flex;flex-direction:column;min-height:0}
+  header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:9px 14px;background:#fff;border-bottom:1px solid #cadae4;z-index:4;box-shadow:0 2px 10px #304c6010}
+  .heading{display:flex;align-items:baseline;gap:10px;margin-right:auto;min-width:210px}
+  h1{font-size:clamp(16px,2vw,21px);margin:0;letter-spacing:-.02em}
+  .sub{font-size:12px;color:#6f8494;white-space:nowrap}
+  .actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .btn{border:1px solid #b9ccd9;background:#f7fbfd;color:var(--ink);padding:7px 11px;border-radius:9px;font-size:13px;font-weight:650;white-space:nowrap;min-height:37px}
+  .btn.primary{background:#285e80;color:white;border-color:#285e80}.btn:disabled{opacity:.4;cursor:default}
+  .btn:active:not(:disabled){transform:translateY(1px)}
+  .counter{font-size:13px;font-weight:750;white-space:nowrap;border:1px solid #d5e1e9;border-radius:20px;background:#f4f8fb;padding:7px 11px}
+  .help{font-size:12px;padding:7px 14px;color:#536d7f;background:#f4f8fb;border-bottom:1px solid #d6e3eb}
+  main{flex:1;min-height:0;display:flex;flex-direction:column}
+  .board-section{position:relative;flex:1;min-height:170px;overflow:hidden}
+  #viewport{width:100%;height:100%;overflow:hidden;position:relative;touch-action:none;cursor:grab;background-color:#f8fafc;background-image:radial-gradient(#b7cad7 1px, transparent 1px);background-size:26px 26px}
+  #viewport.panning{cursor:grabbing}
+  #world{position:absolute;left:0;top:0;width:2500px;height:1500px;transform-origin:0 0;pointer-events:none}
+  .world-tile{pointer-events:auto}
+  #emptyHint{pointer-events:none;position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);border:2px dashed #c2d3df;border-radius:16px;color:#8298aa;text-align:center;padding:28px;font-size:15px;max-width:80%;transition:opacity .2s}
+  .zoom-controls{position:absolute;right:12px;bottom:12px;display:flex;gap:5px;z-index:2;background:#fffdf8ed;padding:5px;border:1px solid #cadae4;border-radius:11px;box-shadow:0 2px 9px #19384a15}
+  .zoom-controls button{width:34px;height:34px;border:0;border-radius:7px;background:#eaf1f6;color:#2b546f;font-size:21px;font-weight:700}
+  .zoom-controls button:nth-child(2){font-size:12px;width:44px}
+  .rack-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:7px 13px;background:#e7f0f5;border-top:1px solid #c5d8e3;font-size:13px;font-weight:700}
+  .rack-head span:last-child{font-size:12px;color:#607d91;font-weight:450}
+  .rack-tools{display:flex;align-items:center;gap:7px}.rack-tools button{background:#fff;border:1px solid #b5ccdc;border-radius:7px;color:#315c78;font-size:19px;line-height:1;width:33px;height:27px}
+  #rack{height:209px;flex:none;background:#e7f0f5;padding:4px 12px 10px;display:grid;grid-auto-flow:column;grid-template-rows:repeat(2,var(--tileh));grid-auto-columns:var(--tilew);gap:8px;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;touch-action:pan-x;align-content:start}
+  #rack::-webkit-scrollbar{height:9px}#rack::-webkit-scrollbar-thumb{border-radius:10px;background:#aec6d6}
+  .tile{width:var(--tilew);height:var(--tileh);background:#fffefa;display:flex;border:2px solid var(--border);border-radius:5px;box-shadow:0 2px 5px #26465c14;user-select:none;-webkit-user-select:none;touch-action:none;position:relative;cursor:grab;flex:none;transform-origin:center center}
+  .tile:active{cursor:grabbing}.tile.selected{border-color:#d88824;box-shadow:0 0 0 3px #ffc56e77,0 3px 8px #26465c28;z-index:20!important}
+  .tile .half{width:50%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;min-width:0;padding:6px;text-align:center}
+  .tile .country{border-left:2px solid #b0c5d2;gap:4px;justify-content:space-around;padding:4px 3px 3px}
+  .city-name,.country-name{font-size:14px;line-height:1.1;font-weight:600;overflow-wrap:anywhere}
+  .country-name{font-size:12.5px}.city-name small{display:block;font-size:9px;margin-top:2px}
+  .flag{width:66px;height:43px;display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid #cbd4d8;background:#fff}
+  .flag svg{width:100%;height:100%;display:block}.flag:empty{border:0}
+  .tile.start{background:#fffdf0}.tile.finish{background:#f3fbf4}
+  .rotate-mini{position:absolute;right:-11px;top:-13px;width:28px;height:28px;border:1px solid #85a8bc;border-radius:50%;background:#fff;color:#285e80;display:grid;place-items:center;font-size:20px;line-height:1;box-shadow:0 2px 6px #39576a2c;z-index:3;opacity:0;transition:opacity .15s}
+  .tile.selected .rotate-mini,.tile:hover .rotate-mini,.tile:focus-within .rotate-mini{opacity:1}
+  .drag-ghost{position:fixed;z-index:200;pointer-events:none;opacity:.85;box-shadow:0 10px 28px #21445b40}
+  #status{position:absolute;top:9px;left:50%;transform:translateX(-50%);z-index:3;padding:9px 15px;border-radius:11px;background:#fff;box-shadow:0 4px 18px #34556b29;max-width:min(670px,90%);text-align:center;font-size:13px;font-weight:600;border:1px solid #bfd6e1;display:none}
+  #status.show{display:block}#status.good{border-color:#82bf91;background:#f0fff2}#status.warn{border-color:#e3be77;background:#fff9e8}
+  @media (max-width:700px){header{padding:7px 9px;gap:6px}.heading{min-width:0}.sub{display:none}.actions{gap:4px}.btn{padding:5px 7px;min-height:32px;font-size:11px}.counter{font-size:11px;padding:5px 7px}.help{padding:5px 9px;font-size:11px}#rack{height:178px;grid-template-rows:repeat(2,76px);grid-auto-columns:174px;gap:6px;--tilew:174px;--tileh:76px}.rack-head{padding:4px 9px}.rack-tools span{display:none}#rack .flag{width:50px;height:32px}#rack .city-name{font-size:12px}#rack .country-name{font-size:10.5px}#rack .tile{--tilew:174px;--tileh:76px}}
+  @media (max-height:620px){#rack{height:116px;grid-template-rows:94px;grid-auto-columns:212px}#rack .tile{--tilew:212px;--tileh:94px}.help{display:none}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+ <header>
+  <div class="heading"><h1>Domino · Die EU-Länder</h1><span class="sub">Hauptstädte &amp; Flaggen</span></div>
+  <div class="actions">
+   <span id="counter" class="counter">1 / 29</span>
+   <button class="btn" id="rotateButton" disabled>↻ Drehen</button>
+   <button class="btn" id="returnButton" disabled>↩ Zurück</button>
+   <button class="btn primary" id="checkButton">✓ Prüfen</button>
+   <button class="btn" id="shuffleButton">Mischen</button>
+   <button class="btn" id="resetButton">Neustart</button>
+  </div>
+ </header>
+ <div class="help">Stein antippen oder aufs Spielfeld ziehen · Stein auswählen und mit ↻ um 90° drehen · Freie Fläche ziehen zum Verschieben · Mit zwei Fingern zoomen</div>
+ <main>
+  <section class="board-section" aria-label="Spielfeld">
+   <div id="viewport"><div id="world"></div><div id="emptyHint">Lege die passenden Steine an den Startstein.</div></div>
+   <div id="status" role="status" aria-live="polite"></div>
+   <div class="zoom-controls" aria-label="Ansicht vergrößern oder verkleinern">
+    <button id="zoomOut" aria-label="Verkleinern">−</button><button id="zoomReset" aria-label="Ansicht zentrieren">◎</button><button id="zoomIn" aria-label="Vergrößern">+</button>
+   </div>
+  </section>
+  <div class="rack-head"><span>Dominosteine</span><div class="rack-tools"><span>Weitere Steine anzeigen</span><button id="rackLeft" aria-label="Steinablage nach links blättern">‹</button><button id="rackRight" aria-label="Steinablage nach rechts blättern">›</button></div></div>
+  <div id="rack" aria-label="Noch nicht gelegte Dominosteine"></div>
+ </main>
+</div>
+<script>
+(()=>{'use strict';
+ const W=212,H=94,BOARD_W=2500,BOARD_H=1500,KEY='eu-domino-laender-v1';
+ const DATA=[
+  ['Start','Belgien','BE'],['Brüssel','Dänemark','DK'],['Kopenhagen','Deutschland','DE'],
+  ['Berlin','Finnland','FI'],['Helsinki','Frankreich','FR'],['Paris','Griechenland','GR'],
+  ['Athen','Großbritannien','GB'],['London','Irland','IE'],['Dublin','Italien','IT'],
+  ['Rom','Luxemburg','LU'],['Luxemburg','Portugal','PT'],['Lissabon','Schweden','SE'],
+  ['Stockholm','Spanien','ES'],['Madrid','Niederlande','NL'],['Amsterdam','Österreich','AT'],
+  ['Wien','Estland','EE'],['Tallin','Lettland','LV'],['Riga','Litauen','LT'],
+  ['Wilna','Malta','MT'],['Valletta','Polen','PL'],['Warschau','Slowakei','SK'],
+  ['Bratislava','Slowenien','SI'],['Laibach','Tschechien','CZ'],['Prag','Ungarn','HU'],
+  ['Budapest','Zypern','CY'],['Nicosia (Lefkosa)','Bulgarien','BG'],
+  ['Sofia','Rumänien','RO'],['Bukarest','Kroatien','HR'],['Zagreb','','']
+ ];
+ const $=id=>document.getElementById(id);
+ const viewport=$('viewport'),world=$('world'),rack=$('rack'),status=$('status');
+ function initialTiles(){return DATA.map((_,id)=>({id,board:id===0,x:id===0?BOARD_W/2-250:0,y:id===0?BOARD_H/2:0,rot:0}))}
+ const state={tiles:initialTiles(),order:[],selected:null};
+ let scale=.86,ox=0,oy=0,gesture=null,drag=null,ghost=null,tipTimer=null,lastTap={id:-1,time:0};
+ const rect=(x,y,w,h,c)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${c}"/>`;
+ const poly=(points,c)=>`<polygon points="${points}" fill="${c}"/>`;
+ const path=(d,c,extra='')=>`<path d="${d}" fill="${c}" ${extra}/>`;
+ const horiz=(colors,ratios)=>{const r=ratios||colors.map(()=>1);let y=0;return colors.map((c,i)=>{let h=40*r[i]/r.reduce((a,b)=>a+b,0);let s=rect(0,y,60,h,c);y+=h;return s}).join('')};
+ const vert=(colors,ratios)=>{const r=ratios||colors.map(()=>1);let x=0;return colors.map((c,i)=>{let w=60*r[i]/r.reduce((a,b)=>a+b,0);let s=rect(x,0,w,40,c);x+=w;return s}).join('')};
+ const cross=(bg,c,x=21,y=20,v=8,h=8)=>rect(0,0,60,40,bg)+rect(x-v/2,0,v,40,c)+rect(0,y-h/2,60,h,c);
+ function art(code){
+  switch(code){
+   case 'BE':return vert(['#171717','#f9dc24','#ed2939']);
+   case 'DK':return cross('#c8102e','#fff',23,20,7,7);
+   case 'DE':return horiz(['#191919','#df262f','#ffce00']);
+   case 'FI':return cross('#fff','#003580',22,20,8,8);
+   case 'FR':return vert(['#002395','#fff','#ed2939']);
+   case 'GR':{let s=horiz(Array.from({length:9},(_,i)=>i%2?'#fff':'#0d5eae'));s+=rect(0,0,25,22.22,'#0d5eae')+rect(10,0,5,22.22,'#fff')+rect(0,8.6,25,5,'#fff');return s}
+   case 'GB':return rect(0,0,60,40,'#012169')+poly('0,0 6,0 60,34 60,40 54,40 0,6','#fff')+poly('60,0 54,0 0,34 0,40 6,40 60,6','#fff')+poly('0,0 3,0 60,37 60,40 57,40 0,3','#c8102e')+poly('60,0 57,0 0,37 0,40 3,40 60,3','#c8102e')+rect(0,15,60,10,'#fff')+rect(24,0,12,40,'#fff')+rect(0,18,60,4,'#c8102e')+rect(27,0,6,40,'#c8102e');
+   case 'IE':return vert(['#169b62','#fff','#ff883e']);
+   case 'IT':return vert(['#009246','#fff','#ce2b37']);
+   case 'LU':return horiz(['#ef3340','#fff','#00a3e0']);
+   case 'PT':return vert(['#006600','#ff0000'],[2,3])+'<circle cx="24" cy="20" r="10" fill="none" stroke="#ffcc42" stroke-width="3"/>'+path('M18 13H30V25L24 29L18 25Z','#fff','stroke="#c32936" stroke-width="2"')+rect(22,17,4,6,'#1763a6');
+   case 'SE':return cross('#006aa7','#fecc00',22,20,7,7);
+   case 'ES':return horiz(['#aa151b','#f1bf00','#aa151b'],[1,2,1])+rect(17,16,6,12,'#b92a38')+rect(17,18,6,4,'#fff')+'<circle cx="20" cy="15.6" r="3" fill="#d4a52c"/>';
+   case 'NL':return horiz(['#ae1c28','#fff','#21468b']);
+   case 'AT':return horiz(['#ed2939','#fff','#ed2939']);
+   case 'EE':return horiz(['#4891d9','#171717','#fff']);
+   case 'LV':return horiz(['#9e1b34','#fff','#9e1b34'],[2,1,2]);
+   case 'LT':return horiz(['#fdb913','#006a44','#c1272d']);
+   case 'MT':return vert(['#fff','#cf142b'])+'<rect x="3" y="3" width="8" height="8" fill="none" stroke="#9da2a6" stroke-width="1.4"/>'+rect(6.2,4.5,1.7,5,'#9da2a6')+rect(4.5,6.2,5,1.7,'#9da2a6');
+   case 'PL':return horiz(['#fff','#dc143c']);
+   case 'SK':return horiz(['#fff','#0b4ea2','#ee1c25'])+path('M13 12H29V25Q22 34 13 25Z','#df1a29','stroke="#fff" stroke-width="1"')+rect(20,14,2,13,'#fff')+rect(17,17,8,2,'#fff')+rect(15,21,12,2,'#fff');
+   case 'SI':return horiz(['#fff','#005da4','#ed1c24'])+path('M10 4H25V17Q18 23 10 17Z','#2072b0','stroke="#e1373c" stroke-width="1"')+poly('12,15 16,9 19,13 22,8 24,15','#fff');
+   case 'CZ':return horiz(['#fff','#d7141a'])+poly('0,0 31,20 0,40','#11457e');
+   case 'HU':return horiz(['#ce293d','#fff','#477050']);
+   case 'CY':return rect(0,0,60,40,'#fff')+path('M14 15L20 10L27 12L32 9L41 14L45 18L35 20L28 25L20 21L16 22Z','#dcad35')+path('M13 29Q30 35 47 29','none','stroke="#6b8b45" stroke-width="2"')+path('M14 27Q30 33 46 27','none','stroke="#6b8b45" stroke-width="2"');
+   case 'BG':return horiz(['#fff','#00966e','#d62612']);
+   case 'RO':return vert(['#002b7f','#fcd116','#ce1126']);
+   case 'HR':{
+    let s=horiz(['#ff0000','#fff','#171796']);
+    s+=path('M24 10H36V23Q30 30 24 23Z','#fff','stroke="#e0b955" stroke-width="1"');
+    for(let y=0;y<5;y++)for(let x=0;x<5;x++)s+=rect(25+x*2,12+y*2,2,2,(x+y)%2?'#fff':'#e42e36');
+    s+=rect(24,8,2.5,2.5,'#46a9cd')+rect(27,7,2.5,3,'#d99c23')+rect(30,7,2.5,3,'#46a9cd')+rect(33,8,2.5,2.5,'#d99c23');
+    return s;
+   }
+   default:return '';
+  }
+ }
+ const flag=code=>code?`<svg role="img" aria-label="Flagge ${code}" viewBox="0 0 60 40" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">${art(code)}</svg>`:'';
+ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ function tileHTML(id,part){
+  const [city,country,code]=DATA[id],special=id===0?' start':id===DATA.length-1?' finish':'';
+  const cityText=city.includes(' (')?`${esc(city.split(' (')[0])}<small>(${esc(city.split(' (')[1])}</small>`:esc(city);
+  return `<div class="tile ${part}${special}" data-id="${id}" role="button" tabindex="0" aria-label="Stein: ${esc(city)}, ${esc(country||'leeres Ende')}" title="Antippen zum Auswählen, doppeltippen zum Drehen"><div class="half"><span class="city-name">${cityText}</span></div><div class="half country"><span class="country-name">${esc(country)}</span><div class="flag">${flag(code)}</div></div><button class="rotate-mini" data-rotate="${id}" type="button" title="Diesen Stein drehen" aria-label="Stein um 90 Grad drehen">↻</button></div>`;
+ }
+ function shuffleOrder(){state.order=Array.from(DATA.keys());for(let i=state.order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[state.order[i],state.order[j]]=[state.order[j],state.order[i]]}}
+ function readSaved(){try{
+  const saved=JSON.parse(localStorage.getItem(KEY));
+  if(!saved||!Array.isArray(saved.tiles)||![26,DATA.length].includes(saved.tiles.length))return false;
+  const oldCount=saved.tiles.length;
+  for(let i=0;i<oldCount;i++){
+   const t=saved.tiles[i];
+   if(t.id!==i||typeof t.board!=='boolean'||!Number.isFinite(t.x)||!Number.isFinite(t.y)||![0,90,180,270].includes(t.rot))return false;
+   state.tiles[i]={id:i,board:t.board,x:t.x,y:t.y,rot:t.rot};
+  }
+  if(Array.isArray(saved.order)&&saved.order.length===oldCount&&new Set(saved.order).size===oldCount&&saved.order.every(i=>Number.isInteger(i)&&i>=0&&i<oldCount)){
+   state.order=[...saved.order,...Array.from({length:DATA.length-oldCount},(_,i)=>oldCount+i)];
+  }
+  return true;
+ }catch{return false}}
+ function ensureStartPlaced(){
+  const start=state.tiles[0];
+  if(start.board)return;
+  start.board=true;start.rot=0;
+  const next=state.tiles[1];
+  if(next.board){const p=endPoint(next,'left');start.x=p.x-W/2;start.y=p.y}
+  else{start.x=BOARD_W/2-250;start.y=BOARD_H/2}
+ }
+ function save(){try{localStorage.setItem(KEY,JSON.stringify({tiles:state.tiles,order:state.order}))}catch{}}
+ function render(){
+  const board=state.tiles.filter(t=>t.board);world.innerHTML=board.map(t=>tileHTML(t.id,'world-tile')).join('');
+  world.querySelectorAll('.tile').forEach(el=>{const t=state.tiles[+el.dataset.id];el.style.left=(t.x-W/2)+'px';el.style.top=(t.y-H/2)+'px';el.style.transform=`rotate(${t.rot}deg)`;el.style.position='absolute';el.style.zIndex=t.id===state.selected?'19':'1'});
+  rack.innerHTML=state.order.filter(id=>!state.tiles[id].board).map(id=>tileHTML(id,'rack-tile')).join('');
+  for(const el of document.querySelectorAll('.tile'))if(+el.dataset.id===state.selected)el.classList.add('selected');
+  const n=board.length;$('counter').textContent=`${n} / ${DATA.length}`;
+  $('rotateButton').disabled=state.selected===null;
+  $('returnButton').disabled=state.selected===null||!state.tiles[state.selected].board;
+  $('emptyHint').style.opacity=n?'0':'1';
+ }
+ function showStatus(text,good=false){clearTimeout(tipTimer);status.textContent=text;status.className='show '+(good?'good':'warn');tipTimer=setTimeout(()=>status.className='',6500)}
+ function select(id){state.selected=id;document.querySelectorAll('.tile').forEach(el=>el.classList.toggle('selected',+el.dataset.id===id));$('rotateButton').disabled=id===null;$('returnButton').disabled=id===null||!state.tiles[id].board}
+ function rotate(id){if(id===null)return;state.tiles[id].rot=(state.tiles[id].rot+90)%360;select(id);save();render()}
+ function toWorld(clientX,clientY){const r=viewport.getBoundingClientRect();return{x:(clientX-r.left-ox)/scale,y:(clientY-r.top-oy)/scale}}
+ function drawCamera(){world.style.transform=`translate(${ox}px,${oy}px) scale(${scale})`;viewport.style.backgroundSize=`${26*scale}px ${26*scale}px`}
+ function zoomAt(factor,cx,cy){const r=viewport.getBoundingClientRect(),px=cx-r.left,py=cy-r.top,wx=(px-ox)/scale,wy=(py-oy)/scale;scale=Math.max(.3,Math.min(2,scale*factor));ox=px-wx*scale;oy=py-wy*scale;drawCamera()}
+ function centerCamera(){const r=viewport.getBoundingClientRect();scale=Math.min(.9,Math.max(.66,r.width/1300));ox=r.width/2-BOARD_W/2*scale;oy=r.height/2-BOARD_H/2*scale;drawCamera()}
+ function endPoint(tile,side){const a=tile.rot*Math.PI/180,sign=side==='right'?1:-1;return{x:tile.x+Math.cos(a)*W/2*sign,y:tile.y+Math.sin(a)*W/2*sign}}
+ function gap(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+ function snap(tile){let best=null,dist=68;const a=tile.rot*Math.PI/180,ux=Math.cos(a)*W/2,uy=Math.sin(a)*W/2;
+  const predecessor=state.tiles[tile.id-1],successor=state.tiles[tile.id+1];
+  if(predecessor&&predecessor.board){const p=endPoint(predecessor,'right'),candidate={x:p.x+ux,y:p.y+uy};const d=gap(tile,candidate);if(d<dist){best=candidate;dist=d}}
+  if(successor&&successor.board){const p=endPoint(successor,'left'),candidate={x:p.x-ux,y:p.y-uy};const d=gap(tile,candidate);if(d<dist){best=candidate;dist=d}}
+  if(best){tile.x=best.x;tile.y=best.y}
+ }
+ function addToBoard(id,clientX,clientY){const t=state.tiles[id],p=toWorld(clientX,clientY);t.board=true;t.x=p.x;t.y=p.y;snap(t);select(id);save();render()}
+ function findFreeSpot(){const r=viewport.getBoundingClientRect(),center=toWorld(r.left+r.width/2,r.top+r.height/2);let choices=[{x:0,y:0}];for(let radius=1;radius<=7;radius++){for(let dy=-radius;dy<=radius;dy++)for(let dx=-radius;dx<=radius;dx++)if(Math.max(Math.abs(dx),Math.abs(dy))===radius)choices.push({x:dx,y:dy})}
+  for(const p of choices){const x=center.x+p.x*(W+22),y=center.y+p.y*(H+27);const sx=(x*scale+ox),sy=(y*scale+oy);if(sx<W*scale*.55||sx>r.width-W*scale*.55||sy<H*scale*.6||sy>r.height-H*scale*.6)continue;
+   if(state.tiles.every(t=>!t.board||Math.hypot(t.x-x,t.y-y)>W*.84))return{x,y}}
+  return{x:center.x+(Math.random()-.5)*140,y:center.y+(Math.random()-.5)*90}
+ }
+ function check(){const placed=state.tiles.filter(t=>t.board).length;if(placed<DATA.length){showStatus(`Noch ${DATA.length-placed} Steine fehlen auf dem Spielfeld.`);return}let connected=0;for(let i=0;i<DATA.length-1;i++)if(gap(endPoint(state.tiles[i],'right'),endPoint(state.tiles[i+1],'left'))<47)connected++;
+  if(connected===DATA.length-1)showStatus('Geschafft! Alle Hauptstädte und Länder sind zu einem vollständigen Domino verbunden. 🎉',true);
+  else showStatus(`${connected} von ${DATA.length-1} Übergängen liegen richtig aneinander. Prüfe, ob die passenden Enden sich berühren.`)
+ }
+ function removeGhost(){if(ghost){ghost.remove();ghost=null}}
+ function makeGhost(id){removeGhost();const wrapper=document.createElement('div');wrapper.innerHTML=tileHTML(id,'drag-ghost');ghost=wrapper.firstElementChild;ghost.querySelector('.rotate-mini').remove();ghost.style.position='fixed';document.body.append(ghost)}
+ function moveGhost(x,y,rot){if(!ghost)return;ghost.style.left=(x-W/2)+'px';ghost.style.top=(y-H/2)+'px';ghost.style.transform=`rotate(${rot}deg)`}
+ function isInsideViewport(x,y){const r=viewport.getBoundingClientRect();return x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom}
+ function pointerDownTile(e){if(e.button!==0||e.target.closest('.rotate-mini'))return;const el=e.target.closest('.tile');if(!el)return;e.preventDefault();e.stopPropagation();
+  const id=+el.dataset.id,t=state.tiles[id];select(id);
+  drag={id,source:t.board?'board':'rack',startX:e.clientX,startY:e.clientY,origX:t.x,origY:t.y,moved:false,pointer:e.pointerId,el};
+  try{el.setPointerCapture(e.pointerId)}catch{}
+ }
+ function pointerMoveTile(e){if(!drag||drag.pointer!==e.pointerId)return;const dx=e.clientX-drag.startX,dy=e.clientY-drag.startY;
+  if(!drag.moved&&Math.hypot(dx,dy)>6){drag.moved=true;if(drag.source==='rack')makeGhost(drag.id)}
+  if(!drag.moved)return;
+  const t=state.tiles[drag.id];
+  if(drag.source==='board'){t.x=drag.origX+dx/scale;t.y=drag.origY+dy/scale;drag.el.style.left=(t.x-W/2)+'px';drag.el.style.top=(t.y-H/2)+'px'}
+  else moveGhost(e.clientX,e.clientY,t.rot);
+ }
+ function pointerUpTile(e){if(!drag||drag.pointer!==e.pointerId)return;const d=drag;drag=null;const t=state.tiles[d.id];
+  try{d.el.releasePointerCapture(e.pointerId)}catch{}
+  if(d.source==='rack'){
+   removeGhost();if(d.moved&&isInsideViewport(e.clientX,e.clientY))addToBoard(d.id,e.clientX,e.clientY);
+   else if(!d.moved){const p=findFreeSpot(),r=viewport.getBoundingClientRect();addToBoard(d.id,r.left+ox+p.x*scale,r.top+oy+p.y*scale)}
+  }else{
+   if(d.moved){snap(t);save();render()}
+   else{const now=Date.now();if(lastTap.id===d.id&&now-lastTap.time<340){lastTap.id=-1;rotate(d.id)}else lastTap={id:d.id,time:now}}
+  }
+ }
+ function boardDown(e){if(e.button!==0||e.target.closest('.tile'))return;e.preventDefault();viewport.setPointerCapture(e.pointerId);const r=viewport.getBoundingClientRect();
+  if(!gesture)gesture={points:new Map(),pinch:null};gesture.points.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(gesture.points.size===2){const p=[...gesture.points.values()],cx=(p[0].x+p[1].x)/2,cy=(p[0].y+p[1].y)/2;gesture.pinch={dist:gap(p[0],p[1]),scale,wx:(cx-r.left-ox)/scale,wy:(cy-r.top-oy)/scale}}viewport.classList.add('panning')
+ }
+ function boardMove(e){if(!gesture||!gesture.points.has(e.pointerId))return;const prev=gesture.points.get(e.pointerId);gesture.points.set(e.pointerId,{x:e.clientX,y:e.clientY});const points=[...gesture.points.values()];
+  if(points.length===2){const r=viewport.getBoundingClientRect(),p=gesture.pinch;if(p){const dist=gap(points[0],points[1]),cx=(points[0].x+points[1].x)/2,cy=(points[0].y+points[1].y)/2;scale=Math.max(.3,Math.min(2,p.scale*(dist/p.dist)));ox=cx-r.left-p.wx*scale;oy=cy-r.top-p.wy*scale}}
+  else if(points.length===1){ox+=e.clientX-prev.x;oy+=e.clientY-prev.y}drawCamera()
+ }
+ function boardUp(e){if(!gesture)return;gesture.points.delete(e.pointerId);if(gesture.points.size<2)gesture.pinch=null;if(!gesture.points.size){gesture=null;viewport.classList.remove('panning')}}
+ document.addEventListener('pointerdown',e=>{if(e.target.closest('.tile'))pointerDownTile(e)});
+ document.addEventListener('pointermove',pointerMoveTile);
+ document.addEventListener('pointerup',pointerUpTile);
+ document.addEventListener('pointercancel',e=>{if(drag&&drag.pointer===e.pointerId){drag=null;removeGhost();render()}boardUp(e)});
+ document.addEventListener('click',e=>{const b=e.target.closest('[data-rotate]');if(b){e.stopPropagation();rotate(+b.dataset.rotate)}});
+ document.addEventListener('keydown',e=>{if(e.target.classList?.contains('tile')&&(e.key==='Enter'||e.key===' ')){e.preventDefault();const id=+e.target.dataset.id;select(id);if(!state.tiles[id].board){const r=viewport.getBoundingClientRect();addToBoard(id,r.left+r.width/2,r.top+r.height/2)}}if(e.key.toLowerCase()==='r'&&state.selected!==null&&!['INPUT','TEXTAREA'].includes(document.activeElement.tagName))rotate(state.selected)});
+ viewport.addEventListener('pointerdown',boardDown);
+ viewport.addEventListener('pointermove',boardMove);
+ viewport.addEventListener('pointerup',boardUp);
+ viewport.addEventListener('pointercancel',boardUp);
+ viewport.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.deltaY>0?.87:1.13,e.clientX,e.clientY)},{passive:false});
+ $('rotateButton').addEventListener('click',()=>rotate(state.selected));
+ $('returnButton').addEventListener('click',()=>{const id=state.selected;if(id===null)return;state.tiles[id].board=false;select(null);save();render()});
+ $('checkButton').addEventListener('click',check);
+ $('shuffleButton').addEventListener('click',()=>{shuffleOrder();save();render()});
+ $('rackLeft').addEventListener('click',()=>rack.scrollBy({left:-Math.max(450,rack.clientWidth*.8),behavior:'smooth'}));
+ $('rackRight').addEventListener('click',()=>rack.scrollBy({left:Math.max(450,rack.clientWidth*.8),behavior:'smooth'}));
+ $('resetButton').addEventListener('click',()=>{if(!confirm('Alle gelegten Steine zurücknehmen und neu beginnen?'))return;state.tiles=initialTiles();state.selected=null;shuffleOrder();save();render();showStatus('Der Startstein liegt bereit. Die übrigen Steine sind in der Ablage.')});
+ $('zoomOut').addEventListener('click',()=>{const r=viewport.getBoundingClientRect();zoomAt(.8,r.left+r.width/2,r.top+r.height/2)});
+ $('zoomIn').addEventListener('click',()=>{const r=viewport.getBoundingClientRect();zoomAt(1.25,r.left+r.width/2,r.top+r.height/2)});
+ $('zoomReset').addEventListener('click',centerCamera);
+ window.addEventListener('resize',()=>drawCamera());
+ if(!readSaved())shuffleOrder();if(!state.order.length)shuffleOrder();ensureStartPlaced();save();render();requestAnimationFrame(centerCamera);
+})();
+</script>
+</body>
+</html>
